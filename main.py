@@ -5,12 +5,14 @@ from plotscripts.analyzeSystem import process_fig_7_data
 from plotscripts.fairness_plots import plot_fair
 from src.simulator.time_series_simulator import play_timeseries
 from plotscripts.PlotRTO import plot_rto
+from src.workloads.alibaba.standalone_gym import create_cluster
 
 if __name__ == "__main__":
     # run_cloudlab()
-    plot_figures_5a_5b()
+    # plot_figures_5a_5b()
     # run_standalone()
     # process_fig_7_data()
     # plot_fair()
     # play_timeseries()
     # plot_rto()
+    create_cluster()

@@ -1,0 +1,11 @@
+Assuming preprocessed data for 7 days is already present..
+Follow the steps:
+0. Need to download alibaba_traces_preprocessed_data_7_days.csv
+1. Scala -> Run DataToMatrix.sc. This will create two folders svc_traceid_map and the matrix.
+2. Python -> MatrixToAppTraces.py
+3. Scala -> Run AppToServiceGraphs.sc and AppTracesToUniqueCGs.sc
+4. Python -> parse_graph_data.py
+5. Python ->  Fig2LP.py
+
+To-dos:
+Write a single script to execute this in a single command.
