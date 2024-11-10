@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: clsi
+  name: clsi
+spec:
+  ports:
+    - name: "3013"
+      port: 3013
+      targetPort: 3013
+  selector:
+    io.kompose.service: clsi
+status:
+  loadBalancer: {}
+

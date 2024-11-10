@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: spelling
+  name: spelling
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: spelling
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network: "true"
+        io.kompose.service: spelling
+        # node: "4"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-spelling
+          imagePullPolicy: IfNotPresent
+          name: spelling
+          ports:
+            - containerPort: 3005
+          resources:
+            requests:
+              cpu: $SPELLING_CPU
+            limits:
+              cpu: $SPELLING_CPU
+          volumeMounts:
+            - mountPath: /var/lib/mongodb
+              name: spelling-claim0
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $SPELLING_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - none
+      volumes:
+        - name: spelling-claim0
+          persistentVolumeClaim:
+            claimName: spelling-claim0
+status: {}
+

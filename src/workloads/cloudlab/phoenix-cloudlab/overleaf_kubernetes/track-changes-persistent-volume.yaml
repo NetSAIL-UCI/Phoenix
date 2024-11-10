@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: $TRACK_CHANGES_PV
+spec:
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 100Mi
+  storageClassName: $TRACK_CHANGES_STORAGE
+  hostPath:
+    path: /data/volumes/track-changes-pv   # Where all the hard drives are mounted
+    type: DirectoryOrCreate
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+            - "2"

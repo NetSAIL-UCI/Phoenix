@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: docstore
+  name: docstore
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: docstore
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network: "true"
+        io.kompose.service: docstore
+        # node: "1"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-docstore
+          imagePullPolicy: IfNotPresent
+          name: docstore
+          ports:
+            - containerPort: 3016
+          resources:
+            requests:
+              cpu: $DOCSTORE_CPU
+            limits:
+              cpu: $DOCSTORE_CPU
+          volumeMounts:
+            - mountPath: /var/lib/mongodb
+              name: docstore-claim0
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $DOCSTORE_NODE
+      volumes:
+        - name: docstore-claim0
+          persistentVolumeClaim:
+            claimName: docstore-claim0
+status: {}
+

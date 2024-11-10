@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: real-time
+  name: real-time
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: real-time
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/default: "true"
+        io.kompose.service: real-time
+        # node: "4"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-real-time
+          imagePullPolicy: IfNotPresent
+          name: real-time
+          ports:
+            - containerPort: 3026
+          resources:
+            requests:
+              cpu: $REAL_TIME_CPU
+            limits:
+              cpu: $REAL_TIME_CPU
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $REAL_TIME_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - none
+status: {}
+

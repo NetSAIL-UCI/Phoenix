@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: custom-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      custom-network: enabled
+  ingress:
+  - {}

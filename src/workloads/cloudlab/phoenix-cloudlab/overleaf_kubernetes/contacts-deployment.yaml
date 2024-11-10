@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: contacts
+  name: contacts
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: contacts
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network: "true"
+        io.kompose.service: contacts
+        # node: "3"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-contacts
+          imagePullPolicy: IfNotPresent
+          name: contacts
+          ports:
+            - containerPort: 3036
+          resources:
+            requests:
+              cpu: $CONTACTS_CPU
+            limits:
+              cpu: $CONTACTS_CPU
+          volumeMounts:
+            - mountPath: /var/lib/mongodb
+              name: contacts-claim0
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $CONTACTS_NODE
+      volumes:
+        - name: contacts-claim0
+          persistentVolumeClaim:
+            claimName: contacts-claim0
+status: {}
+

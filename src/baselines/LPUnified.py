@@ -39,6 +39,7 @@ class LPUnified():
         if self.fairness:
             self.water_fill_fairness, _ = water_filling(unused_resources, self.capacity / len(unused_resources))
         self.plan()
+        self.time_taken = time() - self.overall_start
     
     def init_lp(self):
         self.model = grb.Model(name="Cloud Resilience Problem")

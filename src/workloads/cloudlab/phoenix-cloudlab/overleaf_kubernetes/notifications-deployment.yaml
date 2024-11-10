@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: notifications
+  name: notifications
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: notifications
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network: "true"
+        io.kompose.service: notifications
+        # node: "3"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-notifications
+          imagePullPolicy: IfNotPresent
+          name: notifications
+          ports:
+            - containerPort: 3042
+          resources:
+            requests:
+              cpu: $NOTIFICATIONS_CPU
+            limits:
+              cpu: $NOTIFICATIONS_CPU
+          volumeMounts:
+            - mountPath: /var/lib/mongodb$NOTIFICATIONS_DB_MOUNT
+              name: notifications-claim0
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $NOTIFICATIONS_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - none
+      restartPolicy: Always
+      volumes:
+        - name: notifications-claim0
+          persistentVolumeClaim:
+            claimName: notifications-claim0
+status: {}
+

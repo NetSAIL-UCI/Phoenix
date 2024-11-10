@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: web
+  name: web
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: web
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/default: "true"
+        io.kompose.service: web
+        # node: "2"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - args:
+            - bash
+            - app.sh
+          env:
+            - name: SHARELATEX_APP_NAME
+              value: MicroSharedLatex
+            - name: SHARELATEX_CONFIG
+              value: /etc/sharelatex/settings.coffee
+            - name: SHARELATEX_REAL_TIME_URL
+              value: http://$SHARELATEX_REAL_TIME_URL_VALUE
+            - name: SHARELATEX_REDIS_HOST
+              value: redis
+            - name: SHARELATEX_SESSION_SECRET
+              value: secret-please-change
+            - name: SHARELATEX_SITE_URL
+              value: http://localhost:8080/
+          image: kapila1/sharelatex-web
+          imagePullPolicy: IfNotPresent
+          name: web
+          ports:
+            - containerPort: 80
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: $WEB_CPU
+            limits:
+              cpu: $WEB_CPU
+          securityContext:
+            privileged: true
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $WEB_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - ssd
+status: {}
+

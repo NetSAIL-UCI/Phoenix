@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: track-changes
+  name: track-changes
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: track-changes
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/default: "true"
+        io.kompose.service: track-changes
+        # node: "3"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-track-changes
+          imagePullPolicy: IfNotPresent
+          name: track-changes
+          ports:
+            - containerPort: 3015
+          resources:
+            requests:
+              cpu: $TRACK_CHANGES_CPU
+            limits:
+              cpu: $TRACK_CHANGES_CPU
+          volumeMounts:
+            - mountPath: /var/lib/mongodb
+              name: track-changes-claim0
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $TRACK_CHANGES_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - none
+      volumes:
+        - name: track-changes-claim0
+          persistentVolumeClaim:
+            claimName: track-changes-claim0
+status: {}
+

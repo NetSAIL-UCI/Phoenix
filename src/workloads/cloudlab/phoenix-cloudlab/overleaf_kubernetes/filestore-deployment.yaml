@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: filestore
+  name: filestore
+spec:
+  selector:
+    matchLabels:
+      io.kompose.service: filestore
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.network: "true"
+        io.kompose.service: filestore
+        # node: "1"
+    spec:
+      # schedulerName: chakra
+      containers:
+        - image: gtato/sharelatex-filestore
+          imagePullPolicy: IfNotPresent
+          name: filestore
+          ports:
+            - containerPort: 3009
+          resources:
+            requests:
+              cpu: $FILESTORE_CPU
+            limits:
+              cpu: $FILESTORE_CPU
+          volumeMounts:
+            - mountPath: /app/data
+              name: filestore-claim0
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nodes
+                operator: In
+                values:
+                - $FILESTORE_NODE
+      # affinity:
+      #   nodeAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - weight: 1
+      #       preference:
+      #         matchExpressions:
+      #         - key: disktype
+      #           operator: In
+      #           values:
+      #           - ssd
+      volumes:
+        - name: filestore-claim0
+          persistentVolumeClaim:
+            claimName: filestore-claim0
+status: {}
+
