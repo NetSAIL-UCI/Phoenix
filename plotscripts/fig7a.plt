@@ -29,7 +29,7 @@ set border 3 back linestyle 80 # Remove border on top and right.  These
 #set key above font ",7" horizontal
 #set key spacing 0.5 samplen 0.5 height 0.7
 
-set output "assets/alibaba_svc_p90_resilience_cpm_phoenix.pdf"
+set output "asplos_25/fig7a.pdf"
 set ylabel "Critical Service Availability" font ",9" 
 set xlabel "Cluster Capacity Failed (%)" font ",10" #offset 2
 
@@ -60,7 +60,7 @@ set yrange[0:1]
 
 
 
-plot "asplos_25/processedData2/copied_code_eval_nsdi25_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000_resilience_score.txt" u (($1*100)):2 title "PhoenixCost" with linespoints lc rgb "#e74c3c" lw 2 lt 2 pointtype 2, \
+plot "asplos_25/processedData/eval_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000_resilience_score.txt" u (($1*100)):2 title "PhoenixCost" with linespoints lc rgb "#e74c3c" lw 2 lt 2 pointtype 2, \
 '' u (($1*100)):3 title "PhoenixFair" with linespoints lc rgb "#3498db" lw 2 lt 3 dashtype "_" pointtype 10, \
  '' u (($1*100)):4 title "Priority" with linespoints lc rgb "#f39c12" lw 2 dashtype "--" pointtype 11, \
   '' u (($1*100)):5 title "Fair" with linespoints lc rgb "#9b59b6" lw 2  dashtype ".." pointtype 6, \

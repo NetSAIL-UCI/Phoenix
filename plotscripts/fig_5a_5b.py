@@ -15,8 +15,8 @@ def df_group_by_v2(df, groupby_col, mean_colA, mean_colB, mean_colC):
     result = df.groupby(groupby_col).agg({mean_colA: 'mean', mean_colB: 'mean', mean_colC: 'mean'}).reset_index()
     return result
 
-def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names):
-    print(plt.rcParams['font.sans-serif'])
+def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names, save_dir="asplos_25/"):
+    # print(plt.rcParams['font.sans-serif'])
 
     # Just write the name of the font
     # plt.rcParams['font.sans-serif'] = 'Lato'
@@ -32,7 +32,7 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
 
         df['{}_deviation'.format(sys)] = df[pos].abs() + df[neg].abs()
         
-    print(df.head())
+    # print(df.head())
     # df.to_csv("test.csv", index=False)
     
     # max_deviation = -1*float("inf")
@@ -85,7 +85,7 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
     }
     
     for key in data.keys():
-        save_dir = "assets/scatterplots2/"
+        # save_dir = "asplos_25/"
         x,y = [], []
         legends = []
         fig, ax = plt.subplots()
@@ -96,7 +96,7 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
             # y.append(data[key][alg][1])
             # legends.append(alg)
             plt.scatter(float(data[key][alg][1] / max_deviation), data[key][alg][0], label=system_to_name[alg], color = system_to_color[alg], marker=markers[alg], s=250)
-        filename = save_dir+"failure_level={}_fairness_final_2.png".format(key)
+        filename = save_dir+"failure_level={}_fairness.png".format(key)
         # ax.set(yticks=ind + width, yticklabels=df.index, ylim=[2*width-0.5, len(df)])
         # ax.legend(loc="lower left", fontsize='large')
         # plt.spines['top'].set_visible(False)
@@ -124,8 +124,8 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
         plt.clf()
         
 
-def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names):
-    print(plt.rcParams['font.sans-serif'])
+def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_dir="asplos_25/"):
+    # print(plt.rcParams['font.sans-serif'])
 
     # Just write the name of the font
     # plt.rcParams['font.sans-serif'] = 'Lato'
@@ -138,7 +138,7 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names):
         revenue = sys + "_revenue"
         res = df_group_by(df, "failure_level", mean_success_rate, revenue)
         # max_revenue = max(max_revenue, max(res[revenue]))
-        print(res.head())
+        # print(res.head())
         for index, row in res.iterrows():            
             data[row["failure_level"]][sys] = (row[1], row[2]) 
     # print(max_revenue)
@@ -179,7 +179,7 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names):
     }
     
     for key in data.keys():
-        save_dir = "assets/scatterplots2/"
+        # save_dir = "asplos_25/"
         x,y = [], []
         legends = []
         max_revenue = max(list(data[key].values()), key=lambda x: x[1])[1]
@@ -189,7 +189,7 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names):
             # y.append(data[key][alg][1])
             # legends.append(alg)
             plt.scatter(float(data[key][alg][1] / max_revenue), data[key][alg][0], label=system_to_name[alg], color=system_to_color[alg], marker=markers[alg], s=250)
-        filename = save_dir+"failure_level={}_final_2.png".format(key)
+        filename = save_dir+"failure_level={}_revenue.png".format(key)
         plt.xticks(fontsize=18, color='gray')
         plt.yticks(fontsize=18, color='gray')
         ax.spines['top'].set_visible(False)
@@ -214,8 +214,9 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names):
         
         
 def plot_figures_5a_5b():
-    df = pd.read_csv("cloudlab_results_ae_2.csv")
+    work_dir = "asplos_25/"
+    df = pd.read_csv(work_dir+"cloudlab_results_ae.csv")
     failure_levels = [7]
     sys_names = ["lpunifiedfair", "lpunified", "phoenixfair","phoenixcost","priority","fairDG", "default","priorityminus"]
-    do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names)
-    do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names)
+    do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_dir=work_dir)
+    do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names, save_dir=work_dir)

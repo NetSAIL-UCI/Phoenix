@@ -482,7 +482,7 @@ class AlibabaSimulator:
 
 
 def play_timeseries():
-    gym = "datasets/alibaba/AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000"
+    gym = "datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"
     # gym = "/scratch/kapila1/osdi24/osdi24_gyms_test/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-100000"
 
     deployments = load_gym(gym, rng=1)
@@ -502,26 +502,26 @@ def play_timeseries():
 
     # models = ["fair", "priorityDG"]
     for model in models:
-        with open("asplos_25/RTONSDI4/all_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        out.close()
+        # with open("asplos_25/all_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        # out.close()
         
-        with open("asplos_25/RTONSDI4/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        # with open("asplos_25/RTONSDI4/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
             
-        with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        out.close()
+        # with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        # out.close()
         
-        with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        out.close()
+        # with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        # out.close()
         
-        with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        out.close()
+        # with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        # out.close()
         
-        with open("asplos_25/RTONSDI4/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
             out.write("dep_id,time_vals,resource_vals,availability_vals\n")
         out.close()
 
@@ -561,38 +561,38 @@ def play_timeseries():
             c1_values, all_values, net_c1_values, net_all_values,  c1_success_count, all_success_count, resource_values = sim.play(t, intervals, deployment, model)
             print(c1_success_count)
         
-            with open("asplos_25/RTONSDI4/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(c1_values)):
-                    t = i
-                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_values[i])))
-                out.close()
+            # with open("asplos_25/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            #     for i in range(len(c1_values)):
+            #         t = i
+            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_values[i])))
+            #     out.close()
                 
-            with open("asplos_25/RTONSDI4/all_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(all_values)):
-                    t = i
-                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_values[i])))
-                out.close()
+            # with open("asplos_25/RTONSDI4/all_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            #     for i in range(len(all_values)):
+            #         t = i
+            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_values[i])))
+            #     out.close()
                 
-            with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(c1_values)):
-                    t = i
-                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_c1_values[i])))
-                out.close()
+            # with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            #     for i in range(len(c1_values)):
+            #         t = i
+            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_c1_values[i])))
+            #     out.close()
                 
-            with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(all_values)):
-                    t = i
-                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_all_values[i])))
-                out.close()
+            # with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            #     for i in range(len(all_values)):
+            #         t = i
+            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_all_values[i])))
+            #     out.close()
                 
-            with open("asplos_25/RTONSDI4/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
                 for i in range(len(c1_values)):
                     t = i
                     out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_success_count[i])))
                 out.close()
                 
-            with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(all_values)):
-                    t = i
-                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_success_count[i])))
-                out.close()
+            # with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
+            #     for i in range(len(all_values)):
+            #         t = i
+            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_success_count[i])))
+            #     out.close()

@@ -237,7 +237,7 @@ def minmax_normalize(column):
 def plot_fair():
 # schemes = ["Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP50-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP90-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP50-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP90-10000"]
 # for scheme in schemes:
-    read_folder = "asplos_25/copied_code_eval_nsdi25_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000.csv"
+    read_folder = "asplos_25/eval_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000.csv"
 
 #     # failures = [0.0, 05]
 #     failures = []
@@ -305,5 +305,5 @@ def plot_fair():
     name = "alibaba_svc_p90_fairshare_dev"
     # print(data)
     #         # print(df.head())
-    butterfy_chart_new_v2(df2_transposed, "assets/{}.png".format(name), sys_names)
+    butterfy_chart_new_v2(df2_transposed, "asplos_25/fig7c.png".format(name), sys_names)
             # i += 1

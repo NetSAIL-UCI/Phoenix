@@ -661,7 +661,7 @@ def evaluate_system(pods_to_activate, pod_to_node, state,deployment, p_name, eva
     return res_str
 
 def run_standalone():
-    gyms = ["datasets/alibaba/AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-100000"]
+    gyms = ["datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"]
     for gym in gyms:
     # gym = "data/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP90-1000"
         gym_name = gym.split("/")[-1]
@@ -691,11 +691,10 @@ def run_standalone():
         if planneronly:
             fname = "planner_osdi24_results_{}.csv".format(gym_name)
         else:
-            fname = "asplos_25/copied_code_eval_nsdi25_results_{}.csv".format(gym_name)
+            fname = "asplos_25/eval_results_{}.csv".format(gym_name)
         with open(fname, "w") as out:
             hdr = "num_servers,deployment_id,failure_level"
-            sys_names = ["phoenixcost", "phoenixfair", "priority","fairDG","default", "priorityDG", "fair"]
-            
+            sys_names = ["phoenixcost", "phoenixfair", "priority","fairDG","default"]
             for sn in sys_names:
                 hdr += ",{}_paths,{}_avg_resilience_score,{}_utils,{}_crit,{}_revenue,{}_pos,{}_neg,{}_util,{}_time,{}_p_util".format(sn, sn, sn, sn, sn, sn, sn, sn, sn, sn)
             hdr += "\n"
@@ -728,8 +727,9 @@ def run_standalone():
                             pod_to_node = {}
                         else:
                             pod_to_node, final_pods, time_taken, p_util, original_pod_to_node = run_system(dict(destroyed_state), deployment, cluster, logger, p_name=system, s_name=system, planner_only=planneronly)
+                            print(len(final_pods))
                             # final_pods = [pod for pod in pod_to_node.keys()]
-                            print("System = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
+            #                 print("System = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
                             
                             total_migrations = net_migration(original_pod_to_node, pod_to_node)
                             print("Total migrations are : {}".format(total_migrations))

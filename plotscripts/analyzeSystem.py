@@ -135,8 +135,8 @@ def process_fig_7_data():
     alibaba = True
     raw = "asplos_25/"
     if alibaba:
-        # f1 = "eval_osdi24_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-FreqTaggingP90AtMost-100000.csv"
-        f1 = "copied_code_eval_nsdi25_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000.csv"
+        # f1 = "eval_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-FreqTaggingP90AtMost-100000.csv"
+        f1 = "eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
         f_1 = raw + f1
         df = pd.read_csv(f_1)
     else:
@@ -147,10 +147,10 @@ def process_fig_7_data():
     # data_side_by_side(f1, f2, failure_levels=[0.1, 0.5, 0.9])
    
     # print(df.head())
-    outf = "asplos_25/processedData2/"
+    outf = "asplos_25/processedData/"
     print(df)
     failure_levels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    vals = ["resilience_score", "crit", "revenue"]
+    vals = ["resilience_score", "revenue"]
     # vals = ["revenue"]
     for val in vals:
         if alibaba:

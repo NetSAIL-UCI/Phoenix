@@ -54,7 +54,7 @@ def plot_rto():
     model_color = {"phoenixcost": "#e74c3c", "phoenixfair": "#3498db", "priority": "#f39c12","fairDG": "#9b59b6", "default":"#2ecc71"}
     for mode in modes:
         for model in models:
-            filename = "asplos_25/RTONSDI4/c1_throughput_{}_{}_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000.csv".format(mode, model)
+            filename = "asplos_25/c1_throughput_{}_{}_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv".format(mode, model)
             df = pd.read_csv(filename)
             print(df.head())
             s = df.groupby(["time_vals"])[["resource_vals", "availability_vals"]].mean()
@@ -106,4 +106,4 @@ def plot_rto():
     # plt.savefig("rto_plot_stepwise.png", bbox_inches='tight')
     # plt.figure(figsize=(10,10))
 
-    plt.savefig("assets/rto_asplos.png", bbox_inches='tight')
+    plt.savefig("asplos_25/fig8a.png", bbox_inches='tight')
