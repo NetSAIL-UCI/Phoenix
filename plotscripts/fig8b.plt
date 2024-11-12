@@ -40,6 +40,6 @@ set style fill solid
 
 plot 'asplos_25/processedData/timeplot.txt' using 1:2:xticlabels(1) with linespoints title "PhoenixCost" lc rgb "red" lw 2 lt 2 pointtype 2,\
 '' using 1:3 with linespoints title "PhoenixFair" lc rgb "#0000FF" lw 2 lt 3 dashtype "_" pointtype 10,\
-'' using 1:5 with linespoints title "Default"  lc rgb "#2ecc71"  lw 2 dashtype "--" pointtype 11,\
+'' using 1:4 with linespoints title "Default"  lc rgb "#2ecc71"  lw 2 dashtype "--" pointtype 11,\
 # "../processedData/lp_time.txt" using 1:2 title "LPCost" with linespoints lc rgb "#6495ED",\
 # "../processedData/lp_time.txt" using 1:3 title "LPFair" with linespoints lc rgb "#E033FF"

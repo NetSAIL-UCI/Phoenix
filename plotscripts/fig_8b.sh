@@ -13,9 +13,7 @@ if [ ! -d "asplos_25/processedData" ]; then
 fi
 # Activating venv
 source .venv/bin/activate
-# Run branch fig_8a in main.py to execute a series of commands. 
-# This scipt takes ~10-15 mins on a Mac M2 8 cores, 16GB
-# To-do parallelize time-series for each algorithm.
+# This scipt takes ~10-15 mins on a Mac M2 8 cores, 16GB (if the fig_7.sh was run previously.)
 python3 main.py --c fig_8b
 # Use gnuplot to plot the populated data in processedData directory.
 gnuplot plotscripts/fig8b.plt

@@ -26,7 +26,7 @@ def extract_times_for_plotting(file):
 def prepare_time_data_for_plot():
     one_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-1000.csv"
     ten_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
-    hundred_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
+    hundred_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-100000.csv"
     files = [one_k_path, ten_k_path, hundred_k_path]
     with open("asplos_25/processedData/timeplot.txt", "w") as out:
         for file in files:
