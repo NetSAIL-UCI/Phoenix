@@ -33,7 +33,7 @@ if __name__ == "__main__":
     elif cmd == "fig_8a":
         dir_path = "datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"
         if not os.path.isdir(dir_path):
-            create_cluster(10000) # Create the cloud environment using AlibabaApps
+            create_cluster_asplos_ae(10000) # Create the cloud environment using AlibabaApps
         play_timeseries() # Online simulator that logs each acitivity.
         plot_rto()
     elif cmd == "fig_8c":
