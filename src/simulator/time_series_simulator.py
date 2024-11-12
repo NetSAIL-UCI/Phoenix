@@ -154,7 +154,7 @@ class AlibabaSimulator:
         self.svc_criticalities = {}
         self.state = load_cluster_state(deployment.replace("apps", ""))
         # print(state["dag_to_app"])
-        feval = "datasets/alibaba/AlibabaApps/eval"     
+        feval = "datasets/alibaba/AlibabaAppsTest/eval"     
         for app_ind in range(18):
             self.trace_lookup[app_ind] = {}
             eval_app_folder = feval + "/app{}/eval".format(app_ind)

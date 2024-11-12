@@ -46,6 +46,10 @@ def dump_object_as_json(obj, file):
 
 
 def preprocess(cluster_state):
+    server_to_microservices = {int(key): value for key, value in cluster_state["server_to_microservices"].items()}
+    dag_to_app = {int(key): value for key, value in cluster_state["dag_to_app"].items()}
+    cluster_state["server_to_microservices"] = server_to_microservices
+    cluster_state["dag_to_app"] = dag_to_app
     res = {}
     res["num_nodes"] = len(cluster_state["server_capacity"])
     res["list_of_nodes"] = np.arange(res["num_nodes"])
@@ -66,9 +70,9 @@ def preprocess(cluster_state):
         res["microservices_deployed"] = cluster_state["microservices_deployed"]
     return res
 
-
 def load_cluster_state(path_to_folder):
     file = path_to_folder + "cluster_state.json"
+    # raw_cluster_state = load_and_convert_json(file)
     file_obj = open(file)
     raw_cluster_state = file_obj.read()
     file_obj.close()

@@ -4,8 +4,10 @@ Follow the steps:
 1. Scala -> Run DataToMatrix.sc. This will create two folders svc_traceid_map and the matrix.
 2. Python -> MatrixToAppTraces.py
 3. Scala -> Run AppToServiceGraphs.sc and AppTracesToUniqueCGs.sc
-4. Python -> parse_graph_data.py
-5. Python ->  Fig2LP.py
+4. Python -> create_app_dags.py
+
+At the end of it, you should have a folder in datasets/alibaba called AlibabaApps which has 4 folders and 3 csv files:
+c1_nodes_atmost, apps, cpm, eval, apps_metadata.csv, lp_run.csv (fig_17_c), cdf_data_fig_17_b.csv
 
 To-dos:
 Write a single script to execute this in a single command.

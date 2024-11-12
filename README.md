@@ -29,7 +29,7 @@ and install the requirements using the command:
 
 pip3 install -r requirements.txt
 
-If you're goal is to reproduce the results of the paper, jump directly to Instructions section.
+If you're goal is to reproduce the results of the paper, jump directly to [Instructions](#3-instructions) section.
 
 ## 2. Preparing Workloads
 

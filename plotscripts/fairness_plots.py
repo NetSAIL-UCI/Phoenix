@@ -237,7 +237,7 @@ def minmax_normalize(column):
 def plot_fair():
 # schemes = ["Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP50-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP90-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP50-10000", "Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-FrequencyTaggingP90-10000"]
 # for scheme in schemes:
-    read_folder = "asplos_25/eval_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-10000.csv"
+    read_folder = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
 
 #     # failures = [0.0, 05]
 #     failures = []

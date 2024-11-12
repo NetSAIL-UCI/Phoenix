@@ -13,13 +13,11 @@ if [ ! -d "asplos_25/processedData" ]; then
 fi
 # Activating venv
 source .venv/bin/activate
-# Run branch fig_7 in main.py to execute a series of commands
-# This scipt takes ~5 mins on a Mac M2 8 cores, 16GB
-python3 main.py --c fig_7
+# Run branch fig_8c in main.py to execute a series of commands
+# This scipt takes ~1 mins on a Mac M2 8 cores, 16GB
+python3 main.py --c fig_8c
 # Use gnuplot to plot the populated data in processedData directory.
-gnuplot plotscripts/fig7a.plt
-gnuplot plotscripts/fig7b.plt
-# fig7c is plotted in the call to main.py
+gnuplot plotscripts/fig8c.plt
 # Capture the end time in seconds
 end_time=$(date +%s)
 # Calculate and display the duration in seconds

@@ -230,13 +230,56 @@ def create(nolimit=False):
         dump_cluster_state_alibaba(
             server_capacity_dist, pods, pods_deployed, assignment, deployment["dag_to_id"], dest_folder.replace("/apps", "")
         )
-        
-        
-# if __name__ == "__main__":
-#     # create()
-#     create_interdc()
-    
 
+def create_cluster_asplos_ae(num_servers):
+    cluster_details = {
+        "num_servers": num_servers,
+        "ops_capacity": 0.9,
+        "total_capacity": 5000*num_servers,
+        "resource_tagging": "cpm_nolimit",
+        "server_dist_uniform": True,
+        "root": "datasets/alibaba/",
+        "dag_repo": "datasets/alibaba/DAGRepo",
+        "src_folder": "datasets/alibaba/AlibabaAppsTest/",
+        "criticality_tagging": "google_p90",
+        "replicas": 1
+    }
+    server_dist = cluster_details["server_dist_uniform"]
+    if server_dist:
+        server_capacity_dist = get_physical_machines_uniform(
+            int(cluster_details["num_servers"]), int(cluster_details["total_capacity"])
+        )
+    else:
+        server_capacity_dist = get_physical_machines_skewed(
+            int(cluster_details["num_servers"]), int(cluster_details["total_capacity"])
+        )
+    template_name = "Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-{}".format(num_servers)
+    root = cluster_details["root"]
+    read_folder = cluster_details["src_folder"]
+    dagrepo = cluster_details["dag_repo"]
+    if os.path.exists(dagrepo):
+        shutil.rmtree(dagrepo)
+    create_folder(dagrepo, overwrite=True)
+    out = root + template_name
+    create_folder(out, overwrite=True)
+    replicas = cluster_details["replicas"]
+    for i in range(replicas):
+        infile = dagrepo + "/" + str(0)
+        create_folder(infile, overwrite=True)
+        _, _ = create_repo(read_folder, infile, int(cluster_details["num_servers"]), cluster_details["resource_tagging"], cluster_details["criticality_tagging"], seed=i)
+        deployment, dest_folder = build_deployment(infile, out, i, cluster_details)
+        pods = deployment["pods_resource_map"]  # list of tuples
+        assignment, pods_deployed = balanced_resource_assignment(
+            pods,
+            len(server_capacity_dist),
+            server_capacity_dist,
+            float(cluster_details["ops_capacity"]),
+        )
+        dump_cluster_state_alibaba(
+            server_capacity_dist, pods, pods_deployed, assignment, deployment["dag_to_id"], dest_folder.replace("/apps", "")
+        )
+    
+    
 def create_cluster():
     data = {}
     config = configparser.ConfigParser()
@@ -271,7 +314,7 @@ def create_cluster():
         infile = dagrepo + "/" + str(0)
         create_folder(infile, overwrite=True)
         _, _ = create_repo(read_folder, infile, int(cluster_details["num_servers"]), cluster_details["resource_tagging"], cluster_details["criticality_tagging"], seed=i)
-        deployment, dest_folder = build_deployment(infile, out, i, config)
+        deployment, dest_folder = build_deployment(infile, out, i, cluster_details)
         pods = deployment["pods_resource_map"]  # list of tuples
         assignment, pods_deployed = balanced_resource_assignment(
             pods,

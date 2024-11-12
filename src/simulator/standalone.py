@@ -660,86 +660,84 @@ def evaluate_system(pods_to_activate, pod_to_node, state,deployment, p_name, eva
     res_str += ","+str(resource_utilized)
     return res_str
 
-def run_standalone():
-    gyms = ["datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"]
-    for gym in gyms:
-    # gym = "data/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP90-1000"
-        gym_name = gym.split("/")[-1]
-        print(gym_name)
-        logging.basicConfig(filename='asplos_{}.log'.format(gym_name), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        logger = logging.getLogger()
-        seed = 1
-        logger.info("Starting experiment for gym {} with random seed set to {}".format(gym_name, seed))
-        np.random.seed(1)
-        alibaba = True
-        num_servers = int(gym_name.split("-")[-1])
-        eval_folder = "datasets/alibaba/AlibabaApps/eval"
-        deployments = load_gym(gym, rng=1)
-        # if not alibaba:
-        #     gym = "/scratch/kapila1/Phoenix/template_envs/Mix1-UniformServerLoad-Peak-LongTailPodResourceDist-{}".format(num_servers)
-        #     deployments = load_gym(gym, rng=4)
-        # else:
-        #     gym = "data/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP90-1000"
-        #     # gym = "/scratch/kapila1/Phoenix/template_envs/Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP50-100000"
-        #     deployments = load_gym(gym, rng=5)
+def run_standalone(num_servers):
+    gym = "datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-{}".format(num_servers)
+    gym_name = gym.split("/")[-1]
+    # print(gym_name)
+    logging.basicConfig(filename='asplos_{}.log'.format(gym_name), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+    seed = 1
+    logger.info("Starting experiment for gym {} with random seed set to {}".format(gym_name, seed))
+    np.random.seed(1)
+    alibaba = True
+    num_servers = int(gym_name.split("-")[-1])
+    eval_folder = "datasets/alibaba/AlibabaAppsTest/eval"
+    deployments = load_gym(gym, rng=1)
+    # if not alibaba:
+    #     gym = "/scratch/kapila1/Phoenix/template_envs/Mix1-UniformServerLoad-Peak-LongTailPodResourceDist-{}".format(num_servers)
+    #     deployments = load_gym(gym, rng=4)
+    # else:
+    #     gym = "data/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP90-1000"
+    #     # gym = "/scratch/kapila1/Phoenix/template_envs/Alibaba-UniformServerLoad-Peak-CPMPodResourceDist-GoogleTaggingP50-100000"
+    #     deployments = load_gym(gym, rng=5)
+    
+    # gym_name = gym.split("/")[-1]
+    # logging.basicConfig(filename='osdi_logs/{}.log'.format(gym_name), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    # logger = logging.getLogger()
+    # logger.info("Starting experiment...")c;
+    planneronly = False
+    if planneronly:
+        fname = "planner_osdi24_results_{}.csv".format(gym_name)
+    else:
+        fname = "asplos_25/eval_results_{}.csv".format(gym_name)
+    with open(fname, "w") as out:
+        hdr = "num_servers,deployment_id,failure_level"
+        sys_names = ["phoenixcost", "phoenixfair", "priority","fairDG","default"]
+        for sn in sys_names:
+            hdr += ",{}_paths,{}_avg_resilience_score,{}_utils,{}_crit,{}_revenue,{}_pos,{}_neg,{}_util,{}_time,{}_p_util".format(sn, sn, sn, sn, sn, sn, sn, sn, sn, sn)
+        hdr += "\n"
+        out.write(hdr)
+    out.close()
+    # deployments = deployments[2:]
+    # sys_names = ["phoenix","priority","fairDG","default"]
+    for dep_id, deployment in enumerate(deployments):
         
-        # gym_name = gym.split("/")[-1]
-        # logging.basicConfig(filename='osdi_logs/{}.log'.format(gym_name), level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        # logger = logging.getLogger()
-        # logger.info("Starting experiment...")c;
-        planneronly = False
-        if planneronly:
-            fname = "planner_osdi24_results_{}.csv".format(gym_name)
-        else:
-            fname = "asplos_25/eval_results_{}.csv".format(gym_name)
-        with open(fname, "w") as out:
-            hdr = "num_servers,deployment_id,failure_level"
-            sys_names = ["phoenixcost", "phoenixfair", "priority","fairDG","default"]
-            for sn in sys_names:
-                hdr += ",{}_paths,{}_avg_resilience_score,{}_utils,{}_crit,{}_revenue,{}_pos,{}_neg,{}_util,{}_time,{}_p_util".format(sn, sn, sn, sn, sn, sn, sn, sn, sn, sn)
-            hdr += "\n"
-            out.write(hdr)
+        
+        cluster = load_cluster_state(deployment.replace("apps", ""))
+        # pod_res_val = list(cluster["pod_resources"].values())
+        # key_with_highest_value = max(cluster["pod_resources"], key=cluster["pod_resources"].get)
+        # logger.debug("Cluster state from instance_id = {} for is {}".format(dep_id, gym_name, cluster))
+        print(" instance_id = {} ".format(dep_id))
+        for nodes_to_del in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+            destroyed_state = get_destroyed_state(
+                cluster, int(nodes_to_del * num_servers)
+            )
+            # print(destroyed_state)
+            # logger.info("Deleting {} percent of nodes..".format(100*nodes_to_del))
+            # logger.debug("Cluster state after deleting {} percent of nodes in instance_id = {} is {}".format(100*nodes_to_del,dep_id, destroyed_state))
+            with open(fname, "a") as out:
+                result_str = "{},{},{}".format(num_servers,dep_id,nodes_to_del)
+                for system in sys_names:
+                    # logger.info("Running {} system for the destroyed cluster..".format(system))
+                    if planneronly:
+                        final_pods, time_taken, p_util = run_system_planner_only(dict(destroyed_state), cluster, logger, p_name=system, s_name=system, planner_only=planneronly)
+                        print("Planner = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
+                        pod_to_node = {}
+                    else:
+                        pod_to_node, final_pods, time_taken, p_util, original_pod_to_node = run_system(dict(destroyed_state), deployment, cluster, logger, p_name=system, s_name=system, planner_only=planneronly)
+                        print(len(final_pods))
+                        # final_pods = [pod for pod in pod_to_node.keys()]
+        #                 print("System = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
+                        
+                        total_migrations = net_migration(original_pod_to_node, pod_to_node)
+                        print("Total migrations are : {}".format(total_migrations))
+                    # logger.debug("Final pods provided by {} system are {}".format(system, final_pods))
+                    # logger.info("Time taken by {} system are {}".format(system, time_taken))
+                    # logger.debug("[Simulator-Main] | Dep ID = {} | Failure Level = {} | Input = {} | System = {} | Output = {} | Time = {}".format(dep_id, nodes_to_del, dict(destroyed_state), system, final_pods, time_taken))
+                    result_str += evaluate_system(final_pods, pod_to_node, destroyed_state, deployment,system[0], eval_folder, alibaba_flag=alibaba)
+                    result_str += ","+str(time_taken) + ","+str(p_util)
+                    # print(result_str)
+                # logger.info("Evaluation for {} system is {}".format(system, result_str))
+                result_str += "\n"
+                out.write(result_str)
         out.close()
-        # deployments = deployments[2:]
-        # sys_names = ["phoenix","priority","fairDG","default"]
-        for dep_id, deployment in enumerate(deployments):
-            
-            
-            cluster = load_cluster_state(deployment.replace("apps", ""))
-            # pod_res_val = list(cluster["pod_resources"].values())
-            # key_with_highest_value = max(cluster["pod_resources"], key=cluster["pod_resources"].get)
-            # logger.debug("Cluster state from instance_id = {} for is {}".format(dep_id, gym_name, cluster))
-            print(" instance_id = {} ".format(dep_id))
-            for nodes_to_del in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
-                destroyed_state = get_destroyed_state(
-                    cluster, int(nodes_to_del * num_servers)
-                )
-                # print(destroyed_state)
-                # logger.info("Deleting {} percent of nodes..".format(100*nodes_to_del))
-                # logger.debug("Cluster state after deleting {} percent of nodes in instance_id = {} is {}".format(100*nodes_to_del,dep_id, destroyed_state))
-                with open(fname, "a") as out:
-                    result_str = "{},{},{}".format(num_servers,dep_id,nodes_to_del)
-                    for system in sys_names:
-                        # logger.info("Running {} system for the destroyed cluster..".format(system))
-                        if planneronly:
-                            final_pods, time_taken, p_util = run_system_planner_only(dict(destroyed_state), cluster, logger, p_name=system, s_name=system, planner_only=planneronly)
-                            print("Planner = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
-                            pod_to_node = {}
-                        else:
-                            pod_to_node, final_pods, time_taken, p_util, original_pod_to_node = run_system(dict(destroyed_state), deployment, cluster, logger, p_name=system, s_name=system, planner_only=planneronly)
-                            print(len(final_pods))
-                            # final_pods = [pod for pod in pod_to_node.keys()]
-            #                 print("System = {} Num Pods = {} Failure = {}".format(system, len(final_pods), nodes_to_del))
-                            
-                            total_migrations = net_migration(original_pod_to_node, pod_to_node)
-                            print("Total migrations are : {}".format(total_migrations))
-                        # logger.debug("Final pods provided by {} system are {}".format(system, final_pods))
-                        # logger.info("Time taken by {} system are {}".format(system, time_taken))
-                        # logger.debug("[Simulator-Main] | Dep ID = {} | Failure Level = {} | Input = {} | System = {} | Output = {} | Time = {}".format(dep_id, nodes_to_del, dict(destroyed_state), system, final_pods, time_taken))
-                        result_str += evaluate_system(final_pods, pod_to_node, destroyed_state, deployment,system[0], eval_folder, alibaba_flag=alibaba)
-                        result_str += ","+str(time_taken) + ","+str(p_util)
-                        # print(result_str)
-                    # logger.info("Evaluation for {} system is {}".format(system, result_str))
-                    result_str += "\n"
-                    out.write(result_str)
-            out.close()

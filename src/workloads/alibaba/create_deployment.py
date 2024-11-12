@@ -199,9 +199,7 @@ def build_deployment_v2(infile, dest_folder, trial, config):
     return deployment, dest_folder
 
 
-def build_deployment(infile, dest_folder, trial, config):
-    cluster = dict(config["Cluster"])
-    template = dict(config["Template"])
+def build_deployment(infile, dest_folder, trial, cluster):
     deployment = assign_deployment(infile, cluster)
     dest_folder += "/" + str(trial)
     create_folder(dest_folder, overwrite=True)
