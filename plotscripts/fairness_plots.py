@@ -47,8 +47,8 @@ def butterfy_chart_new_v2(df,fname, sys_names):
     }
     colors = ["#3498db", "#9b59b6", "#e74c3c", "#2ecc71", "#f39c12"]
     sys_names = {
-        "phoenixfair": "GeckoFair",
-        "phoenixcost": "GeckoCost",
+        "phoenixfair": "PhoenixFair",
+        "phoenixcost": "PhoenixCost",
         "fairDG": "Fair",
         "priority": "Priority",
         "default": "Default",

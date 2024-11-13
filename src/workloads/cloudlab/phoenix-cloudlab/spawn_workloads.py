@@ -9,6 +9,8 @@ import logging
 import create_users
 import pickle
 import ast
+from chaos import stop_kubelet, start_kubelet
+import argparse
 
 init_node_hr = {
     "hr0--consul":"node-6",
@@ -218,7 +220,6 @@ def spawn_hr_v2(ns, cpu_profiles, stateful_nodes, stateless_nodes, logger, v1, i
     if istioinjection:
         cmd = "kubectl label ns {} istio-injection=enabled".format(ns)
         output = subprocess.check_output(cmd, shell=True, text=True)
-    # print(output)
     hr_instance = copy.deepcopy(HR_SERVICES)
     for service in hr_instance.keys():
         print("Deploying service {}".format(service))
@@ -231,7 +232,11 @@ def spawn_hr_v2(ns, cpu_profiles, stateful_nodes, stateless_nodes, logger, v1, i
         print("Assigned env vars are : {}".format(env_vars))
         cpu = int(next((value for key, value in service_details["env_vars"].items() if "_CPU" in key), None).replace("m", ""))/1000
         print("CPU requirement for {} is {}".format(service, cpu))
-        node = init_node_hr[ns+"--"+service]
+        node_old = init_node_hr[ns+"--"+service]
+        if service_details["stateless"]:
+            node = utils.best_fit_bin_packing(v1,cpu, stateless_nodes)
+        else:
+            node = utils.best_fit_bin_packing(v1,cpu, stateful_nodes)
         node_label = utils.get_node_label(node)
         print("Trying to place {} on {} using best-fit bin packing policy".format(service, node_label))
         manifests = utils.fetch_all_files_hr(service, ROOT="hr_kube_manifests/")
@@ -271,7 +276,6 @@ def spawn_ov_v2(ns, cpu_profiles, stateful_nodes, stateless_nodes, logger, v1, n
     if istioinjection:
         cmd = "kubectl label ns {} istio-injection=enabled".format(ns)
         output = subprocess.check_output(cmd, shell=True, text=True)
-    # print(output)
     overleaf_instance = copy.deepcopy(OVERLEAF_SERVICES)
     
     for service in overleaf_instance.keys():
@@ -286,13 +290,18 @@ def spawn_ov_v2(ns, cpu_profiles, stateful_nodes, stateless_nodes, logger, v1, n
         cpu = int(next((value for key, value in service_details["env_vars"].items() if "_CPU" in key), None).replace("m", ""))/1000
         print("CPU requirement for {} is {}".format(service, cpu))
         
-        node = init_node_overleaf[ns+"--"+service]
+        node_old = init_node_overleaf[ns+"--"+service]
         # if service_details["stateless"]:
         #     # node = random.choice(stateless_nodes) # earlier was using random
         #     node = utils.best_fit_bin_packing(v1,cpu, stateless_nodes)
         # else:
         #     # node = random.choice(stateful_nodes)
         #     node = utils.best_fit_bin_packing(v1,cpu, stateful_nodes)
+        
+        if service_details["stateless"]:
+            node = utils.best_fit_bin_packing(v1,cpu, stateless_nodes)
+        else:
+            node = utils.best_fit_bin_packing(v1,cpu, stateful_nodes)
         node_label = utils.get_node_label(node)
         print("Trying to place {} on {} using best-fit bin packing policy".format(service, node_label))
         manifests = utils.fetch_all_files_hr(service, ROOT="overleaf_kubernetes/")
@@ -369,13 +378,6 @@ def dump_object_as_json(obj, file):
     with open(file, "w") as out:
         out.write(str(obj))
     out.close()
-    
-def load_obj(file):
-    file_obj = open(file)
-    raw_cluster_state = file_obj.read()
-    file_obj.close()
-    cluster_state = ast.literal_eval(raw_cluster_state)
-    return preprocess(cluster_state)
 
 
 def spawn_hr0():
@@ -435,25 +437,96 @@ def spawn_hr0():
     }
     dump_object_as_json(cluster_env_dict, "cluster_env.json")
 
+
 if __name__ == "__main__":
-    logging.basicConfig(filename='spawn.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - {} - %(message)s'.format("[Phoenix]"))
+    parser = argparse.ArgumentParser(description="Process input parameters.")
+    parser.add_argument("--hostfile", type=str, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")    
+    args = parser.parse_args()
+    path_to_host_json = args.hostfile
+    
+    node_info_dict = utils.load_obj(path_to_host_json)
+    
+    logging.basicConfig(filename='spawn.log', filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s - {} - %(message)s'.format("[Phoenix]"))
     logger = logging.getLogger()
     logger.info("Initiating spawning workloads")
     use_default = False
     resource_profiles_dir = "resource_profiles_v6/"
     istioinjection = False
     config.load_kube_config()
-    # Initialize the Kubernetes API client.
+    ### Initialize the Kubernetes API client.
     v1 = client.CoreV1Api()
-    nodes = utils.get_nodes(v1)
-    stateful_nodes = ["node-2", "node-3", "node-4", "node-5", "node-6", "node-7", "node-8", "node-9", "node-10"]
-    stateless_nodes = ['node-11', 'node-12', 'node-13', 'node-14', 'node-15', 'node-16', 'node-17', 'node-18', 'node-19', 'node-20', 'node-21', 'node-22', 'node-23', 'node-24']
+    ### Get all nodes in the cluster
+    all_nodes = v1.list_node()
+    nodes = [node.metadata.name for node in all_nodes.items]
+    print("All nodes: ", nodes)
+    ### Filter nodes with control plane roles
+    control_plane_nodes = [
+        node.metadata.name for node in all_nodes.items
+        if 'node-role.kubernetes.io/master' in node.metadata.labels 
+        or 'node-role.kubernetes.io/control-plane' in node.metadata.labels
+    ]
 
-    stateless_nodes = stateless_nodes
+    logger.info("Control Plane Nodes: {}".format(control_plane_nodes))
+    worker_nodes = list(set(nodes) - set(control_plane_nodes))
+    logger.info("Worker Nodes: {}".format(worker_nodes))
+
+    if not set(nodes).issubset(set(list(node_info_dict.keys()))):
+        raise ValueError(f"hostfile and k8s nodes do not have the same elements. Please input the correct file.")
+        
+    ### Now check if ssh works by stopping and starting all kubelets in worker nodes. 
+    ### This step will also check if we are able to run chaos correctly.
     
+    for node in worker_nodes: # going one node at a time
+        stop_kubelet(node, node_info_dict)
+        logger.info("Executed the command to stop the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 40-50 seconds.".format(node))
+        done = utils.monitor_node_status(v1, node, desired_state="NotReady")
+        if not done:
+            raise TimeoutError("Unable to stop kubelet on node: {}".format(node))
+        logger.info("Successfully stopped the kubelet on {}".format(node))
+        start_kubelet(node, node_info_dict)
+        logger.info("Executed the command to start the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 15-20 seconds.".format(node))
+        done = utils.monitor_node_status(v1, node, desired_state="Ready")
+        if not done:
+            raise TimeoutError("Unable to restart kubelet after stopping the node: {}".format(node))
+        logger.info("Successfully restarted the kubelet on {}".format(node))
+    
+    logger.info("Checked that node info dict works correctly by stopping and restarting kubelets.")
+    
+    
+    ### Now check the size of the worker nodes where workloads will be spawned.
+    ### Must be atleast 150 CPUs with minimum 5 worker nodes so that two are reserved for stateful and the others are stateless.
+    ### Per node atleast 7 CPUs
+    
+    
+    if len(worker_nodes) < 5:
+        raise PermissionError("Requires at least 5 workers to run tests.")
+    
+    cluster_state = utils.get_cluster_state(v1)
+    total_cpu = 0
+    for node in worker_nodes:
+        cpu = cluster_state[node]['cpu']
+        if cpu < 7:
+            raise PermissionError("Worker node {} has only {} cpus when minimum 7 cpus are required.".format(node, cpu))
+        total_cpu += cpu
+        
+    if total_cpu < 150:
+        raise PermissionError("Total cpu = {} when minimum 150 cpus are required.".format(total_cpu))
+    
+    logger.info("Checked the minimum cluster requirements for spawning 5 workloads.")
+    logger.info("All checks have been executed.")
+    
+    
+    ### All the checks have been executed.
+    
+    sorted_nodes = sorted(worker_nodes, key=lambda x: int(x.split("-")[1]))
+    
+    ### Now separating stateful nodes for stateful services such as mongodb.
+    # num_workers = len(worker_nodes)
+    ### reserve 40% of the worker_nodes for stateful stuff.
+    stateful_nodes, stateless_nodes = utils.split_list(sorted_nodes)
     logger.info("Stateful Nodes: {}".format(stateful_nodes))
     logger.info("Stateless Nodes: {}".format(stateless_nodes))
-    logger.info("Stateless Nodes after removing: {}".format(stateless_nodes))
+
     workloads = {}
     namespaces = ["overleaf0","overleaf1", "overleaf2", "hr0", "hr1"]
     num_users = [10, 10, 10, 10, 10]
@@ -489,4 +562,7 @@ if __name__ == "__main__":
         "workloads": workloads,
         "nodes_to_monitor": stateless_nodes
     }
+    logger.info("cluster_env_dict for reproducing figure 5 results: {}".format(cluster_env_dict))
     dump_object_as_json(cluster_env_dict, "cluster_env.json")
+    logger.info("Dumped the cluster_env_dict into a json file called cluster_env.json!")
+    

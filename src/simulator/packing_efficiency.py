@@ -308,7 +308,7 @@ def load_file_counter(eval_app_folder):
 
 
 def run_packing_efficiency():
-    gyms = ["datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"]
+    gyms = ["datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-100000"]
     for gym in gyms:
         gym_name = gym.split("/")[-1]
         seed = 1

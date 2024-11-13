@@ -1,8 +1,9 @@
 from kubernetes import client, config, watch
 import subprocess
 import utils
-import chaos_HR
+import chaos
 import spawn_workloads
+import argparse
 # clean everything related to phoenix
 # i.e. all resources in the namespace label phoenix=enabled.
 
@@ -10,7 +11,7 @@ import spawn_workloads
 def start_all_kubelets(api, node_info_dict):
     nodes = utils.get_nodes(api)
     for node in nodes:
-        chaos_HR.start_kubelet(node, node_info_dict)
+        chaos.start_kubelet(node, node_info_dict)
     
 def delete_resources_in_namespaces_with_label(api, label_selector):
     # Load the Kubernetes configuration from the default location or your kubeconfig file
@@ -51,19 +52,28 @@ def delete_resources_in_namespaces_with_label(api, label_selector):
             
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process input parameters.")
+    parser.add_argument("--hostfile", type=str, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")    
+    args = parser.parse_args()
+    path_to_host_json = args.hostfile
+    
+    node_info_dict = utils.load_obj(path_to_host_json)
     config.load_kube_config()
-    api = client.CoreV1Api()
-    label_selector = "phoenix=enabled"
-    node_info_dict = utils.load_obj("node_info_dict.json")
-    # start_all_kubelets(api, node_info_dict)
-    chaos_HR.start_kubelet("node-24", node_info_dict)
-    chaos_HR.start_kubelet("node-21", node_info_dict)
-    chaos_HR.start_kubelet("node-19", node_info_dict)
-    chaos_HR.start_kubelet("node-18", node_info_dict)
-    chaos_HR.start_kubelet("node-17", node_info_dict)
-    chaos_HR.start_kubelet("node-15", node_info_dict)
-    chaos_HR.start_kubelet("node-11", node_info_dict)
-    chaos_HR.start_kubelet("node-23", node_info_dict)
-
-    # delete_resources_in_namespaces_with_label(api, label_selector)
-    # spawn_workloads.spawn_hr0()
+    # Initialize the Kubernetes API client.
+    v1 = client.CoreV1Api()
+    # this command starts all kubelets.
+    # start_all_kubelets(v1, node_info_dict)
+    
+    # this command deletes all the resources that were created with the label phoenix=enabled.
+    delete_resources_in_namespaces_with_label(v1, "phoenix=enabled")
+    
+    #### MISC: IGNORE #####
+    
+    # chaos.start_kubelet("node-22", node_info_dict)
+    # chaos.start_kubelet("node-21", node_info_dict)
+    # chaos.start_kubelet("node-19", node_info_dict)
+    # chaos.start_kubelet("node-18", node_info_dict)
+    # chaos.start_kubelet("node-17", node_info_dict)
+    # chaos.start_kubelet("node-15", node_info_dict)
+    # chaos.start_kubelet("node-11", node_info_dict)
+    # chaos.start_kubelet("node-23", node_info_dict)

@@ -1,14 +1,14 @@
 # Artifact Evaluation for "Cooperative Graceful Degradation in Containerized Clouds" (ASPLOS'25 AE #315)
 
-## 1. Artifact Goals
+# 1. Artifact Goals
 
 The instructions will reproduce the key results in Figures 5, 6, 7, and 8 in Section 6 of the submission. That is, the following instructions will lead you to test the Phoenix Controller in (2) CloudLab, and (2) Standalone simulator environments.
 
-The entire artifact process can take around xx hours if run with a concurrency of xx workers (e.g., using the CloudLab machine we suggest); it will take about xx hours if running sequentially (with no concurrent worker).
+The entire artifact process can take around 10-12 hours.
 
 If you have any questions, please contact us via email or HotCRP.
 
-## Prerequisites
+# Prerequisites
 
 You will need:
 1. Apache Spark to generate app graphs from Alibaba Traces (https://spark.apache.org/downloads.html)
@@ -20,9 +20,44 @@ You will need:
 
 (3) and (4) lies in the critical path.
 
+## Installing Apache Spark
+1. Download the apache spark package using the link: https://spark.apache.org/downloads.html
+Alternatively, you can run the linux cli command:
+wget https://dlcdn.apache.org/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz
+2. Next untar the spark package: tar -xzvf spark-3.5.3-bin-hadoop3
+3. Test out using the linux cli:
+spark-3.5.3-bin-hadoop3/bin/spark-shell
+This command should open the spark-shell.
+
+## Installing Gurobi:
+1. Go to the link: https://portal.gurobi.com/iam/licenses/request
+2. If you don't already have an account, you need to create one. You should use your university email address.
+3. Go to Licenses > Request > In the block Named-User Academic click the button GENERATE NOW.
+4. Once you accept the agreement, a popup will generate with a cli command such as grbgetkey xxxxx-xxxx... Copy this and store it.
+5. Next, go to this link and download the gurobi package depending on your machine: https://www.gurobi.com/downloads/gurobi-software/
+Using cli, you can run: wget https://packages.gurobi.com/11.0/gurobi11.0.3_linux64.tar.gz replace the link depending on your machine and untar it using the command:
+tar -xzvf gurobi11.0.3_linux64.tar.gz
+6. Next in linux cli run the grbgetkey command (copied in step 4). This will download a license file.
+7. In order to use GUROBI it needs to be in the path. Run the following commands:
+export GUROBI_HOME="/path/to/gurobi/linux64"
+export PATH="${PATH}:${GUROBI_HOME}/bin"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
+
+## Installing gnuplot:
+1. Go to this link: https://sourceforge.net/projects/gnuplot/files/gnuplot/5.4.10/
+2. Download the pkg file depending on your machine. For example, in linux:
+wget https://sourceforge.net/projects/gnuplot/files/gnuplot/5.4.10/gnuplot-5.4.10.tar.gz/download
+3. It should automatically add it to your path. Try running the command: gnuplot and it should open the gnuplot shell.
+If any errors encountered, refer to the gnuplot documentation: http://www.gnuplot.info
+
+
+## CloudLab
+
+Instructions for CloudLab can be found below.
+
 Given high demands and reservation requests in CloudLab, we are actively porting our code to work on all types of kubernetes environment. We will update this information soon.
 
-### Installation
+## Installing Phoenix
 
 Once the prerequisites have been met, please create a venv environment in python3.
 and install the requirements using the command:
@@ -31,13 +66,13 @@ pip3 install -r requirements.txt
 
 If you're goal is to reproduce the results of the paper, jump directly to [Instructions](#3-instructions) section.
 
-## 2. Preparing Workloads
+# Preparing Workloads
 
 Currently, we implement two environments to test the efficacy of Phoenix:
-1. Standalone: A large-scale cluster with 100K nodes running microservice-based workloads extracted from Alibaba Traces 2021 in a simulated environment.
-2. Cloudlab: A cloudlab cluster with 25 nodes running 5 instances of 2 microservice-based applications, Overleaf and HotelReservations (HR) from DeathStarBench.
+1. AdaptLab: A large-scale cluster with 100K nodes running microservice-based application dependency graphs extracted from Alibaba cluster Traces in a simulated environment.
+2. Real-world Experiments: A k8s cluster with 25 nodes running 5 instances of 2 microservice-based applications, Overleaf and HotelReservations (HR) from DeathStarBench.
 
-### Standalone
+## AdaptLab
 
 We emulate a 100K node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in the paper XX. Refer to XX Section in this document to walk through how we derive the dependency graphs for Alibaba.
 
@@ -45,13 +80,127 @@ Since these 18 microservice-based applications do not have information such as c
 
 Once these workloads are prepared we pass them to our benchmarking module to obtain how different baselines perform.
 
-### Cloudlab
+## Real-world experiment
 
-We run a 25 node cluster on Cloudlab with d710 machines using the k8s example profile. On this cluster, we deploy 5 instances of Overleaf and HR applications. In addition, we have the corresponding load-generators to simulate traffic on these applications. To incorporate sufficient diversity, we tweak the load-generators for example overleaf0 instance is edits oriented, similarly hr1 is reserve oriented. Using these load generators, we first obtain the CPU requirements each application has.
+There are 2 modes of preparing the real-world experiments:
+1. via CloudLab
+2. or by bringing in your own Kubernetes Cluster
 
-For criticality tagging, we use a manual tagging approach as we describe in Section 3 and 7 of our paper, i.e. to pick the most critical service (for example, edits in overleaf0) that drives the business and tagging all microservices that the service spans as highly critical (C1). Next, for the remaining microservices, we perform an ordering that is reasonable. 
+We assume users to have some understanding and operational experience with k8s and basic know-how of how to use kubectl commands such as
+kubectl get pods -n overleaf0
+kubectl get svc
+kubectl get nodes
+, etc.
 
-### Benchmarking
+Note: The instructions below assume that you have a 25 node k8s cluster (either cloudlab or your own k8s) with minimum 8 CPUs. But we are in the process of downscaling to be able to run in smaller environments (10 nodes) with fewer application instances (2 instances).
+
+## CloudLab
+
+### Setting up CloudLab
+
+If you are a first timer using CloudLab, you should create a CloudLab account using your organization's (preferably a university) email address. Here is the link for creating an account: https://www.cloudlab.us/signup.php. Note that account is first verified and can take some time. 
+
+Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php
+
+### Requesting CloudLab Resource
+
+You can use the CloudLab web UI to start an experiment with the following parameters:
+1. Select the k8s example profile (https://www.cloudlab.us/show-profile.php?project=emulab-ops&profile=k8s).
+2. 25 nodes
+3. Machine Type: d710 machines (in Emulab cluster)
+4. Experiment Link Speed: Any
+5. Click on Finish without inputting time and date to start the setup now. If you would like to schedule it for later then please set these fields.
+
+### Uploading Phoenix source code
+
+Once the cloudlab is setup and the resources are running, do the following steps:
+
+1. Open the CloudLab Experiment Page and open the ListView to check the table for the status. All entries in this table must be 'ready' and Startup must be 'finished'.
+2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable.
+3. Execute using the command: python3 -m src.workloads.cloudlab.setup_cloudlab
+
+This will upload all the required source code to "node-0"
+
+Next, ssh into "node-0" and run the following command
+bash node-0_startup.sh
+
+This command will download all dependencies that are required for the experiment.
+
+Finally, the successful execution of the setup_cloudlab script will print the IP address of the k8s cluster which is publicly available.
+
+Open this IP address link and a nginx page should appear.
+
+Store the ip address for later use. 
+
+### Spawning workloads
+
+Next, ssh into node-0. All the commands listed in this section are to be executed on node-0.
+
+Execute the command:
+
+python3 spawn_workloads.py --hostfile node_info_dict.json
+
+This command will start the deployment process. You can view the logs associated to this script in the file "spawn.log"
+
+If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command: 
+
+python3 cleanup.py --hostfile node_info_dict.json
+
+This will rollback the steps taken. Now restart the script again: spawn_workloads.py.
+
+If the issue persists, please report to us with the error.
+
+Once the spawning is complete, you should use the ip address (stored above) to test the following:
+
+Check manually if all workloads are running correctly: ip:30919 (overleaf0), ip:30921 (overleaf1), ip:30923 (overleaf2), ip:30811 (hr0), ip:30812 (hr1). 
+
+You can test out anyone of the overleaf instances by logging into it using the credentials:
+username: user1@netsail.uci.edu
+password: iamuser1
+
+And navigate all the pages to check that they are correctly working. (Repeat this step for other overleaf and HR instances).
+
+<!-- ### Running PhoenixController
+
+
+On this cluster, we deploy 5 instances of Overleaf and HR applications. In addition, we have the corresponding load-generators to simulate traffic on these applications. To incorporate sufficient diversity, we tweak the load-generators for example overleaf0 instance is edits oriented, similarly hr1 is reserve oriented. Using these load generators, we first obtain the CPU requirements each application has.
+
+For criticality tagging, we use a manual tagging approach as we describe in Section 3 and 7 of our paper, i.e. to pick the most critical service (for example, edits in overleaf0) that drives the business and tagging all microservices that the service spans as highly critical (C1). Next, for the remaining microservices, we perform an ordering that is reasonable.  -->
+
+## Bring your own k8s cluster
+
+### Minimum Requirements
+If you decide to bring your own k8s cluster, you should have the minimum specs in order for the setup to run successfully:
+
+1. Number of nodes: 25
+2. CPU per node: 8 CPUs (minimum)
+3. Ability to ssh into each node to stop kubelets.
+4. Expose the ip address for load-generators to run correctly. The ports we use for the five workloads are 30811, 30812, 30918, 30919, 30920, 30921, 30922, and 30923.
+
+### Uploading Phoenix Source Code
+If all these requirements are satisfied, please run the following command:
+
+python3 -m src.workloads.cloudlab.setup_k8s --hostfile path/to/hostfile.json
+The hostfile is a json object of the following format:
+    {
+        'node-0': {'host': 'kapila1@pc433.emulab.net', 'label': '0'}, 
+        'node-1': {'host': 'kapila1@pc544.emulab.net', 'label': '1'}, 
+        'node-2': {'host': 'kapila1@pc551.emulab.net', 'label': '2'}, 
+        'node-3': {'host': 'kapila1@pc441.emulab.net', 'label': '3'}, 
+        'node-4': {'host': 'kapila1@pc502.emulab.net', 'label': '4'}
+    }
+The key is the node name (please adhere to the above naming scheme with node-0 as the control plane node which is the master node) and the each key has a dict which has two keys: 1) host in the format <user>@<ip_addr>. This is required because we want to run chaos experiments and therefore want ssh capabilities to kill kubelet on the nodes.
+    
+2) label is use to assign labels so PhoenixController can interface with k8s scheduler. By interface, phoenix uses affinity to specify which deployment must be scheduled where.
+
+Once the json file is populated, executing the above command will upload source code to the control-plane node, node-0.
+
+### Spawning Workloads
+
+Same as Spawning Workloads in the CloudLab setup.
+
+
+## Benchmarking
 
 For the two workloads, we develop a benchmarking platform to test out different workloads on Phoenix and other baselines. Currently, our benchmarking platform runs in two modes:
 1. Simulation Mode
@@ -86,6 +235,14 @@ We have results from two environments. Figures 5 and Figures 6 are evaluated on 
 
 We first describe the key steps for generating the results of figure 7 and figure 8 since they can be ran locally:
 1. Download the derived applications from alibaba traces using the following google drive link: https://drive.google.com/drive/folders/1xLULx1vcwZxOISPTOcfaMoj05ux2ysF9?usp=share_link
+
+Alternatively, you can run the following commands using cli:
+
+cd Phoenix/
+pip install gdown
+gdown https://drive.google.com/uc?id=1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W
+unzip datasets.zip
+
 2. This folder, datasets/, must be placed in the root directory such that src/ and datasets/ are in the same directory.
 3. Next, open terminal and cd into plotscripts/
 4. Run fig_7.sh. Please read the comments in fig_7.sh to get an overview of how evaluation is performed. This script roughly takes 4-5 hours to execute fully because it first creates the cloud environment to benchmark the results.

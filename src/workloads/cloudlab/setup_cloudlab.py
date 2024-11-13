@@ -1,177 +1,200 @@
-import os
-import pyperclip
-import subprocess
-import ast
+from src.workloads.cloudlab import setup_utils
+import re
+
+STARTUP = "src/workloads/cloudlab/phoenix-cloudlab/node-0_startup.sh"
+ISTIO_STARTUP = "src/workloads/cloudlab/phoenix-cloudlab/istio_startup.sh"
+NODE_INFO_DICT = "src/workloads/cloudlab/phoenix-cloudlab/node_info_dict.json"
 
 
-MAIN_MASTER_NODE_ID = "node-0"
-KUBERNETES_UTILS_DIR = "cloudlab_full"
-PLANNER_DIR = "RMPlanner"
-SCHEDULER_DIR = "RMScheduler"
-CACHES_DIR = "caches"
-FINISHED_STARTUP = "Finished"
-ROOT_DIR = "./git_repo_B3/ResilienceManager/"
-
-def setup_env(commands, host):
-    # Split the commands by newline and execute each one
-    for command in commands.strip().splitlines():
-        # Skip empty lines
-        if command.strip():
-            try:
-                # Run the command and capture output
-                print(command)
-                run_remote_cmd(host, command)
-            except subprocess.CalledProcessError as e:
-                print(f"Error executing '{command}': {e.stderr}")
-
-# I'm sending it this way instead of cloning the repo because it's convenient to have them all in the same directory when importing
-def send_master_node_scripts(host):
-    send_dir(host, KUBERNETES_UTILS_DIR)
-
-def send_dir(host, local_dir_path, ignored_substrings=[]):
-    for fname in os.listdir(local_dir_path):
-        if any([s in fname for s in ignored_substrings]):
-            continue
-
-        fpath = f"{local_dir_path}/{fname}"
-        scp_r_flag = ""
-
-        if os.path.isfile(fpath):
-            scp_r_flag = ""
-        elif os.path.isdir(fpath):
-            scp_r_flag = "-r"
-        else:
-            raise AssertionError
-
-        print(f"running scp {scp_r_flag} {local_dir_path}/{fname} {host}:~")
-        res = os.system(
-            f"scp -o StrictHostKeyChecking=no {scp_r_flag} {local_dir_path}/{fname} {host}:~"
-        )
-        assert res == 0
-
-
-def copy_ssh_command(host):
-    pyperclip.copy(f"ssh -p22 {host}")
-
-
-def get_python39(host):
-    # run all commands in one line so that each one only runs when the previous one has finished
-    run_remote_cmd(
-        host,
-        "sudo add-apt-repository ppa:deadsnakes/ppa; sudo apt update; sudo apt -y install python3.9; sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2; sudo apt-get -y install python3-pip",
-    )
-
-
-def install_packages(host):
-    # run all commands in one line so that each one only runs when the previous one has finished
-    run_remote_cmd(
-        host,
-        "sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes",
-    )
-
-
-# it's more efficient to use the imagePullPolicy of Never compared to IfNotPresent even if the image is already present. Thus, we use never and pull the images with this script beforehand
-def pull_image(host):
-    run_remote_cmd(host, "sudo docker pull arungupta/helloworld-spring-boot:latest")
-
-def run_cmd(cmd):
-    res = os.system(cmd)
-    assert res == 0
+def get_ip(host):
+    cmd = "hostname -I | awk '{print $1}'"
+    output = setup_utils.run_remote_cmd_output(host, cmd)
+    ip_pattern = r'\b(?:\d{1,3}\.){3}\d{1,3}\b'
+    ip_addresses = re.findall(ip_pattern, output)
+    return ip_addresses[0]
     
-def run_remote_cmd_output(host, cmd):
-    output = subprocess.check_output(f"ssh -p 22 -o StrictHostKeyChecking=no {host} -t {cmd}", shell=True, text=True)
-    return output
     
-def run_remote_cmd(host, cmd):
-    res = os.system(f"ssh -p 22 -o StrictHostKeyChecking=no {host} -t {cmd} &")
-    assert res == 0
+def label_istio_file():
+    s = """
+kubectl get deployment istiod -n istio-system -o yaml > pilot-deployment.yaml
+kubectl get deployment istio-ingressgateway -n istio-system -o yaml > ig-deployment.yaml
+
+# make changes to sampling and add nodeaffinity to ig and istiod
+
+kubectl apply -f pilot-deployment.yaml
+kubectl apply -f ig-deployment.yaml
+kubectl apply -f istio/jaeger.yaml
+kubectl apply -f istio/prometheus.yaml
+    """
+    return s
 
 
-def get_node_info_dict(list_view_str):
-    lines = list_view_str.strip().split("\n")
-    node_info_dict = {}
-    for i, line in enumerate(lines):
-        parts = line.split("\t")
-        node_id = parts[0]
-        print(len(parts))
-        if len(parts) != 1:  # Skip blank lines
-            node_info_dict[node_id] = dict()
-            node_info_dict[node_id]["startup"] = parts[5].split(" ")[-1]
-            if i == len(lines) - 1:
-                node_info_dict[node_id]["host"] = parts[-1].rstrip().split(" ")[-1]
-            else:
-                node_info_dict[node_id]["host"] = parts[-3].rstrip().split(" ")[-1]
+def label_nodes(node_info_dict):
+    s = """
+sudo add-apt-repository ppa:deadsnakes/ppa; sudo apt update; sudo apt -y install python3.9; sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2; sudo apt-get -y install python3-pip
+# install kubernetes package
+sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes; python3 -m pip install networkx; python3 -m pip install numpy; python3 -m pip install requests; python3 -m pip install sortedcontainers; python3 -m pip install matplotlib
+"""
+    for node in node_info_dict.keys():
+        node_id = node.split("-")[-1].strip()
+        s += "kubectl label node {} nodes={}\n".format(node, node_id)
+        
+    s += """
+kubectl delete all --all
+kubectl delete pvc --all
+kubectl delete pv --all
+curl -L https://istio.io/downloadIstio | sh -
 
-    return node_info_dict
+cd istio-1.19.3/
+# setenv PATH $PWD/bin:$PATH
+export PATH = $PWD/bin:$PATH
+istioctl install
 
-def write_to_delete_nodes(node_info_dict):
-    with open("delete_nodes.sh", "a") as out:
-        out.write("\n")
-        for key in node_info_dict.keys():
-            out.write("# {}, {}\n".format(key, node_info_dict[key]["host"]))
-    out.close()
+wget https://packages.gurobi.com/10.0/gurobi10.0.3_linux64.tar.gz
+tar -xvf gurobi10.0.3_linux64.tar.gz
 
-def set_up_nodes(node_info_dict, do_send_master_node_scripts=True, do_pull_image=True):
-    # synchronous tasks
-    for id, info in node_info_dict.items():
-        host = info["host"]
-        startup = info["startup"]
+setenv GUROBI_HOME gurobi1003/linux64
+setenv PATH ${PATH}:${GUROBI_HOME}/bin
+setenv LD_LIBRARY_PATH ${GUROBI_HOME}/lib
 
-        if do_send_master_node_scripts:
-            if id == MAIN_MASTER_NODE_ID:
-                assert startup == FINISHED_STARTUP
-                copy_ssh_command(host)
-                send_master_node_scripts(host)
-
-    # asynchronous tasks
-    for id, info in node_info_dict.items():
-        host = info["host"]
-        startup = info["startup"]
-
-        if do_pull_image:
-            if startup == FINISHED_STARTUP:
-                pull_image(host)
-
-
-def grab_pod_state_cache(node_info_dict, gyminst_id, num_nodes):
-    main_master_node_host = node_info_dict[MAIN_MASTER_NODE_ID]["host"]
-    cache_path = f"{CACHES_DIR}/cached_pod_state_{gyminst_id}_{num_nodes}n.pkl"  # it'd be better to import the function that does this from end_to_end.py, but the importing is weird since end_to_end also imports k8s_helpers
-    res = os.system(
-        f"scp {main_master_node_host}:~/{cache_path} {KUBERNETES_UTILS_DIR}/{CACHES_DIR}"
-    )
-    assert res == 0
-
-
-def dump_object_as_json(obj, file):
-    with open(file, "w") as out:
-        out.write(str(obj))
-    out.close()
-    
-def load_obj(file):
-    file_obj = open(file)
-    raw_cluster_state = file_obj.read()
-    file_obj.close()
-    cluster_state = ast.literal_eval(raw_cluster_state)
-    return cluster_state
-
-
-if __name__ == "__main__":
-    # to get this string, just go to the List View, highlight everything, and copy-paste it
-    list_view_str = """node-4	pc728	d430	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc728.emulab.net 		
- 
-node-1	pc786	d430	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc786.emulab.net 		
- 
-node-0	pc713	d430	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc713.emulab.net 		
- 
-node-3	pc722	d430	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc722.emulab.net 		
- 
-node-2	pc750	d430	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc750.emulab.net 		
- 
+echo "Done! Press Enter twice"
 
 """
-    node_info_dict = get_node_info_dict(list_view_str)
-    print(node_info_dict)   
-    # set_up_nodes(node_info_dict, do_send_master_node_scripts=True, do_pull_image=True)
-    # write_to_delete_nodes(node_info_dict)
-    # grab_pod_state_cache(node_info_dict, "test1", 8)
-# ssh -p22 kapila1@pc543.emulab.netssh -p22 kapila1@pc543.emulab.net
+    return s
+
+def startup_cloudlab():
+    list_view_str = """node-24	pc431	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc431.emulab.net 		
+node-20	pc418	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc418.emulab.net 		
+node-21	pc427	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc427.emulab.net 		
+node-22	pc543	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc543.emulab.net 		
+node-23	pc448	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc448.emulab.net 		
+node-11	pc436	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc436.emulab.net 		
+node-10	pc524	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc524.emulab.net 		
+node-13	pc513	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc513.emulab.net 		
+node-12	pc435	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc435.emulab.net 		
+node-15	pc426	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc426.emulab.net 		
+node-14	pc530	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc530.emulab.net 		
+node-17	pc534	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc534.emulab.net 		
+node-16	pc494	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc494.emulab.net 		
+node-19	pc440	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc440.emulab.net 		
+node-18	pc553	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc553.emulab.net 		
+node-5	pc556	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc556.emulab.net 		
+node-4	pc502	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc502.emulab.net 		
+node-7	pc478	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc478.emulab.net 		
+node-6	pc545	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc545.emulab.net 		
+node-1	pc544	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc544.emulab.net 		
+node-0	pc433	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc433.emulab.net 		
+node-3	pc441	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc441.emulab.net 		
+node-2	pc551	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc551.emulab.net 		
+node-9	pc417	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc417.emulab.net 		
+node-8	pc479	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc479.emulab.net 		
+
+"""
+    node_info_dict = setup_utils.get_node_info_dict(list_view_str)
+    # print(node_info_dict)
+    setup_utils.dump_object_as_json(node_info_dict, NODE_INFO_DICT)
+    s = label_nodes(node_info_dict)
+    
+    s1 = label_istio_file()
+    # label worker nodes -- all nodes excluding node-0
+    with open("src/workloads/cloudlab/phoenix-cloudlab/node-0_startup.sh", "w") as file:
+        file.write(s)
+    file.close()
+    
+    setup_utils.send_dir(node_info_dict['node-0']['host'], "src/workloads/cloudlab/phoenix-cloudlab/")
+    
+    cmd = f"rsync -avz --relative src/phoenix src/baselines {node_info_dict['node-0']['host']}:~"
+    setup_utils.run_cmd(cmd)
+
+    # # # get ip of cloudlab cluster 
+    ip = get_ip(node_info_dict['node-0']['host'])
+
+    print("The IP address for the cluster is {}. (Store it for later use!)".format(ip))
+    
+    
+if __name__ == "__main__":
+    """
+    Use this setup if using cloudlab.
+    USAGE:
+    
+    Before executing the command below, open the CloudLab Experiment Link:
+    https://www.cloudlab.us/status.php?uuid=<exp-id>
+    In this page click on the list view now a table will appear.
+    Starting from the second row (excluding the header row) copy all the rows at once
+    and paste below.
+    
+    Then run:
+    
+    cd Phoenix/
+    python3 -m  src.workloads.cloudlab.setup_cloudlab
+    
+    Output:
+    This file sends Phoenix's source code with additional scripts 
+    required to run the experiment.
+    
+    This code also prints the IP which will be supplied to the load generator. 
+    Please keep this IP for later use.
+    
+    Assumption:
+    We assume that the user has already setup CloudLab account and has received a 
+    k8s cluster with example profile: https://www.cloudlab.us/show-profile.php?project=emulab-ops&profile=k8s
+    
+    We also assume that the user has added ssh keys for this script to work. Check this:
+    https://www.cloudlab.us/ssh-keys.php
+    
+    Description:
+    
+    This script uploads all the necessary source code required to run the experiment.
+    """
+    
+    list_view_str = """node-24	pc431	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc431.emulab.net 		
+node-20	pc418	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc418.emulab.net 		
+node-21	pc427	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc427.emulab.net 		
+node-22	pc543	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc543.emulab.net 		
+node-23	pc448	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc448.emulab.net 		
+node-11	pc436	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc436.emulab.net 		
+node-10	pc524	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc524.emulab.net 		
+node-13	pc513	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc513.emulab.net 		
+node-12	pc435	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc435.emulab.net 		
+node-15	pc426	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc426.emulab.net 		
+node-14	pc530	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc530.emulab.net 		
+node-17	pc534	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc534.emulab.net 		
+node-16	pc494	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc494.emulab.net 		
+node-19	pc440	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc440.emulab.net 		
+node-18	pc553	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc553.emulab.net 		
+node-5	pc556	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc556.emulab.net 		
+node-4	pc502	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc502.emulab.net 		
+node-7	pc478	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc478.emulab.net 		
+node-6	pc545	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc545.emulab.net 		
+node-1	pc544	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc544.emulab.net 		
+node-0	pc433	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc433.emulab.net 		
+node-3	pc441	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc441.emulab.net 		
+node-2	pc551	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc551.emulab.net 		
+node-9	pc417	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc417.emulab.net 		
+node-8	pc479	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc479.emulab.net 		
+
+"""
+    node_info_dict = setup_utils.get_node_info_dict(list_view_str)
+    # print(node_info_dict)
+    setup_utils.dump_object_as_json(node_info_dict, NODE_INFO_DICT)
+    s = label_nodes(node_info_dict)
+    
+    s1 = label_istio_file()
+    # label worker nodes -- all nodes excluding node-0
+    with open("src/workloads/cloudlab/phoenix-cloudlab/node-0_startup.sh", "w") as file:
+        file.write(s)
+    file.close()
+    # with open(ISTIO_STARTUP, "w") as file:
+    #     file.write(s1)
+    # file.close()
+    
+    setup_utils.send_dir(node_info_dict['node-0']['host'], "src/workloads/cloudlab/phoenix-cloudlab/")
+    
+    cmd = f"rsync -avz --relative src/phoenix src/baselines {node_info_dict['node-0']['host']}:~"
+    setup_utils.run_cmd(cmd)
+
+    # # # get ip of cloudlab cluster 
+    ip = get_ip(node_info_dict['node-0']['host'])
+
+    print("The IP address for the cluster is {}. (Store it for later use!)".format(ip))
+    

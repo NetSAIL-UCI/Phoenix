@@ -1,14 +1,13 @@
 import subprocess
 import utils
-from kubernetes import client, config
+# from kubernetes import client, config
 import logging
 import datetime
+import argparse
+import run_controller as c
+import random
+import pickle
 
-# NODES_TO_DEL = ["14", "15", "13", "10", "22", "23", "11", "19", "12"]
-# NODES_TO_DEL =  ["18", "23", "24", "22", "13", "14", "10", "15", "17"]
-NODES_TO_DEL =  ["24", "21", "19", "18", "17", "15", "11", "23"]
-
-# 'node-12', 'node-13', 'node-14', 'node-11', 'node-16', 'node-17', 'node-20
 def run_remote_cmd_output(host, cmd):
     output = subprocess.check_output(f"ssh -p 22 -o StrictHostKeyChecking=no {host} -t {cmd}", shell=True, text=True)
     return output
@@ -16,13 +15,14 @@ def run_remote_cmd_output(host, cmd):
 def start_kubelet(node, node_info_dict):
     host = node_info_dict[node]['host']
     cmd = "sudo systemctl start kubelet"
-    run_remote_cmd_output(host, cmd)
+    output = run_remote_cmd_output(host, cmd)
+    print(output)
     
 def stop_kubelet(node, node_info_dict):
     host = node_info_dict[node]['host']
     cmd = "sudo systemctl stop kubelet"
-    run_remote_cmd_output(host, cmd)
-    # print(host, cmd)
+    output = run_remote_cmd_output(host, cmd)
+    print(output)
     
 def stop_kubelet_docker(node):
     try:
@@ -119,85 +119,79 @@ def get_all_objects_associated(deployment, ns):
 
 
     
-def run_chaos(pods, nodes, logger, host_name, node_info_dict):
-    processes = []
-    for pod in pods:
-        ns_name, ms_name = pod
-        if "overleaf" in ns_name:
-            manifests = utils.fetch_all_files_hr(ms_name, ROOT="overleaf_kubernetes/")[::-1]
-        else:
-            manifests = utils.fetch_all_files_hr(ms_name, ROOT="hr_kube_manifests/")[::-1]
-        
-        objects = get_all_objects_associated(ms_name, ns_name)
-        
-        print(objects)
-        # delete_pod_forcefully(objects["pod"], namespace=ns_name)
-        # delete_deployment_forcefully(objects["deployment"], namespace=ns_name)
-        # print(manifests)
-        # for resource in manifests:
-        # #     if "service.yaml" in resource:
-        # #         cmd = "kubectl delete svc {} -n {} --force".format(ms_name, ns_name)
-        # #     elif "deployment.yaml" in resource:
-        # #         cmd = "kubectl delete deployment {} -n {} --grace-period=0 --force".format(ms_name, ns_name)
-        #     if "pvc.yaml" in resource:
-        #         if "overleaf" in ns_name:
-        #             pvc_name = ms_name + "-claim0"
-        #         else:
-        #             pvc_name = ms_name + "-pvc"
-        #         cmd = "kubectl delete pvc {} -n {}".format(pvc_name, ns_name)
-        #     elif "persistent-volume.yaml" in resource:
-        #         nsid = ns_name[-1]
-        #         pv_name = ms_name+"-pv{}".format(nsid)
-        #         cmd = "kubectl delete pv {}".format(pv_name, ns_name)
-        #     else:
-        #         continue
-        #     logger.info("Deleting pvc and pv as a separate process..")
-        #     output = subprocess.Popen(cmd, shell=True)
-        # logger.info("[{}] {} [Chaos] Forcefully deleted resources {} on namespace {}.".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), host_name, ms_name, ns_name))
+def run_chaos(nodes, logger, node_info_dict):
     for node in nodes:
         stop_kubelet(node, node_info_dict)
-        logger.info("[{}] {} [Chaos] Stopped Kubelet on node {}.".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), host_name, node))
+        logger.info("{} [Chaos] Stopped Kubelet on node {}.".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), node))
     
 if __name__ == "__main__":
     
-    # pods = ["memcached-profile-7d76f9b89d-7wgt2", "memcached-reserve-74f8858dd4-892dr", "memcached-rate-c54c84c46-8vhl7"]
-    # pods = ["memcached-rate-c54c84c46-8vhl7"]
-    # pods = ["search-5c5489c64-qp2vx"]
-    # pods = ["emailservice-7c668c7967-qhctq"]
-    # pods = ["currencyservice-7b8b878c7c-dcl7t"]
-    # pods = ["productcatalogservice-6b987c8b9c-2q7qw"]
-    # pods = ["adservice-6589f77cff-kv6j6"]
-    # for pod in pods:
-    #     print(pod)
-    #     ns_name = "default"
-    #     ms_name = "-".join(pod.split("-")[:-2])
-    #     objects = get_all_objects_associated(ms_name, ns_name)
-    #     # print(objects["pod"])
-    #     # print(objects["deployment"])
-    #     delete_pod_forcefully(objects["pod"], namespace=ns_name)
-    #     delete_deployment_forcefully(objects["deployment"], namespace=ns_name)
+    parser = argparse.ArgumentParser(description="Process input parameters.")
+    parser.add_argument(
+        "--n",
+        type=int,
+        help="Number of machines to stop kubelet on.",
+        required=True
+    )
+    parser.add_argument(
+        "--hostfile", 
+        type=str, 
+        help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}"
+    )
+    args = parser.parse_args()
     
-    logging.basicConfig(filename='chaos.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(filename='chaos.log', level=logging.INFO, filemode='w', format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger()
-    node_info_dict = utils.load_obj("node_info_dict.json")
-    name_of_host_cmd = "hostname"
-    host_name = str(subprocess.check_output(name_of_host_cmd, shell=True, text=True)).strip()
-    config.load_kube_config()
-    # # #Initialize the Kubernetes API client.
-    v1 = client.CoreV1Api()
-    pod_to_node, node_to_pod = utils.list_pods_with_node(v1, phoenix_enabled=True)
     
-    # print(node_to_pod)
-    # # print(pod_to_node, node_to_pod)    
-    pods, nodes = get_all_pods_to_delete(v1, node_to_pod)
-    print(pods)
-    print(nodes)
+    num_servers = args.n
+    path_to_host_json = args.hostfile
     
-    # # # print(pods, nodes)
-    logger.info("[{}] {} [Chaos] Beginning chaos experiment on nodes {}".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), host_name, nodes))
-    run_chaos(pods, nodes, logger, host_name, node_info_dict)
+    # load node_info_dict file
+    node_info_dict = utils.load_obj(path_to_host_json)
+    logger.info("Loaded Node Info Dict: {}".format(node_info_dict))
+    # Get stateless nodes:
+    state = c.load_obj("cluster_env.json")
+    stateless_nodes = state["nodes_to_monitor"]
+    logger.info("Loaded cluster_env.json. The stateless nodes are: {}".format(stateless_nodes))
     
-    ## Only during testing..
-    # nodes = ["node-22", "node-23", "node-24"]
-    # for node in nodes:
-    #     start_kubelet(node)
+    # Choose randomly num_servers from the stateless_nodes list
+    random_selection = random.sample(stateless_nodes, num_servers)    
+    logger.info("Running chaos experiments on these nodes: {}".format(random_selection))
+    run_chaos(random_selection, logger, node_info_dict)
+    logger.info("Chaos completed".format(random_selection))
+    with open("deleted_nodes.pickle", "wb") as file:
+        pickle.dump(random_selection, file)
+    logger.info("Dumped deleted nodes in deleted_nodes.pickle")
+    
+    
+    #### MISCELLANEOUS #######
+    
+    # config.load_kube_config()
+    # Initialize the Kubernetes API client.
+    # v1 = client.CoreV1Api()
+    
+    # node_info_dict = utils.load_obj("node_info_dict.json")
+    # start_kubelet("node-19", node_info_dict)
+    
+    
+    # logging.basicConfig(filename='chaos.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    # logger = logging.getLogger()
+    # node_info_dict = utils.load_obj("node_info_dict.json")
+    # name_of_host_cmd = "hostname"
+    # host_name = str(subprocess.check_output(name_of_host_cmd, shell=True, text=True)).strip()
+    # config.load_kube_config()
+    # # # #Initialize the Kubernetes API client.
+    # v1 = client.CoreV1Api()
+    # pod_to_node, node_to_pod = utils.list_pods_with_node(v1, phoenix_enabled=True)
+    
+    # # print(node_to_pod)
+    # # # print(pod_to_node, node_to_pod)    
+    # pods, nodes = get_all_pods_to_delete(v1, node_to_pod)
+    # print(pods)
+    # print(nodes)
+    
+    # # # # print(pods, nodes)
+    # logger.info("[{}] {} [Chaos] Beginning chaos experiment on nodes {}".format(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), host_name, nodes))
+    # run_chaos(pods, nodes, logger, host_name, node_info_dict)
+    
+    

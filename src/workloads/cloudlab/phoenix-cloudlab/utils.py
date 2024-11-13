@@ -13,8 +13,63 @@ import time
 from collections import deque
 from typing import Optional, Dict
 import math
-from kubernetes.client import V1Pod
-from kubernetes import client, config, watch
+from kubernetes import client, config
+import math
+
+def split_list(lst):
+    n = len(lst)
+    
+    # Calculate 40% size and apply ceiling if it's a float
+    size_30 = math.ceil(0.30 * n)
+    
+    # The remaining elements go to the 60% list
+    size_70 = n - size_30
+    
+    # Split the list into two parts
+    stateful = lst[:size_30]
+    stateless = lst[size_30:]
+    
+    return stateful, stateless
+
+def monitor_node_status(v1, node_name, desired_state="NotReady", check_interval=10, timeout=300):
+    """
+    Monitor the status of a Kubernetes node and check if it reaches the desired state
+    (either 'Ready' or 'NotReady'). Stops once the desired state is reached or after the timeout.
+
+    :param v1: Kubernetes API client instance
+    :param node_name: Name of the node to monitor
+    :param desired_state: Desired state to check for ('Ready' or 'NotReady')
+    :param check_interval: Interval in seconds to check the node status
+    :param timeout: Maximum time in seconds to wait before stopping (default: 5 minutes)
+    :return: True if the node reaches the desired state within the timeout, False otherwise
+    """
+    start_time = time.time()
+    print(f"Monitoring status of node '{node_name}' for desired state '{desired_state}'...")
+
+    while True:
+        # Check if timeout has been reached
+        elapsed_time = time.time() - start_time
+        if elapsed_time > timeout:
+            print(f"Timeout reached: Node '{node_name}' did not reach the desired state '{desired_state}' within {timeout} seconds.")
+            return False
+
+        # Fetch the node's information
+        node = v1.read_node_status(node_name)
+
+        # Find the condition indicating readiness status
+        for condition in node.status.conditions:
+            if condition.type == "Ready":
+                current_state = "Ready" if condition.status.strip() == "True" else "NotReady"
+                print(f"Current state of node '{node_name}': {current_state}")
+
+                # Check if the node status matches the desired state
+                if current_state == desired_state:
+                    print(f"Node '{node_name}' has reached the desired state '{desired_state}'.")
+                    return True
+
+        # Wait before the next status check
+        time.sleep(check_interval)
+        
 
 def check_pods_in_namespace(namespace, v1):
     # v1 = client.CoreV1Api()
@@ -388,7 +443,6 @@ def most_empty_bin_packing(api, resource, candidates):
     else:
       _, node_to_pod = list_pods_with_node(api, phoenix_enabled=False) # here need all pods on node to get the total count
       if len(node_to_pod[best_fit_bin]) > 9:
-        
         print("The most-empty node {} had more than 10 pods so going to the next most-empty.".format(best_fit_bin))
         print("here is the list of pods assigned to node {}".format(best_fit_bin, node_to_pod[best_fit_bin]))
         candidates.remove(best_fit_bin)
@@ -409,7 +463,7 @@ def best_fit_bin_packing(api, resource, candidates):
       if node in candidates:
         remaining = cluster_state[node]["cpu"] - resource
         # print(node, cluster_state[node]["cpu"], remaining)
-        if remaining < 0: # if remaining < 0 that mean there is not enough space to fit.
+        if remaining <= 0: # if remaining < 0 that mean there is not enough space to fit.
           continue
         else:
           if remaining < remaining_space:

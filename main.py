@@ -43,9 +43,9 @@ if __name__ == "__main__":
         one_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-1000.csv"
         ten_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
         hundred_k_path = "asplos_25/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
-        # if not os.path.isfile(hundred_k_path):
-        #     create_cluster_asplos_ae(100000)
-        #     run_standalone(100000)
+        if not os.path.isfile(hundred_k_path):
+            create_cluster_asplos_ae(100000)
+            run_standalone(100000)
         if not os.path.isfile(one_k_path):
             create_cluster_asplos_ae(1000)
             run_standalone(1000)
