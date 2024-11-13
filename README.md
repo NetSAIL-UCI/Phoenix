@@ -4,7 +4,7 @@
 
 # 1. Artifact Goals
 
-The instructions will reproduce the key results in Figures 5, 6, 7, and 8 in Section 6 of the submission. That is, the following instructions will lead you to test the Phoenix Controller in (1) Real-world Clusters, and (2) Standalone simulator environments.
+The instructions will reproduce the key results in Figures 5, 6, 7, and 8 in Section 6 of the submission. That is, the following instructions will lead you to test the Phoenix Controller in (1) Real-world Kubernetes (k8s) cluster, and (2) Standalone simulator environments.
 
 The entire artifact process can take around 10-12 hours.
 
@@ -93,7 +93,7 @@ Currently, we implement two environments to test the efficacy of Phoenix:
 
 ## AdaptLab
 
-We emulate a 100K node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in the paper XX. Refer to XX Section in this document to walk through how we derive the dependency graphs for Alibaba.
+In AdaptLab, we emulate a 100K node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). Refer to Section 3 in this paper to walk through how we derive the dependency graphs for Alibaba.
 
 Since these 18 microservice-based applications do not have information such as criticality of each microservice deployment and its resource information, we build a simulator that can test out different criticality tagging schemes and different resource assignment models. Currently, we support two automated criticality tagging schemes (Service-Level Tagging and Frequency-Based Tagging). Similarly, for resource assignment we support two models (Calls Per Minute - based and Azure Bin Packing).
 
@@ -196,6 +196,7 @@ If all these requirements are satisfied, please run the following command:
 
 python3 -m src.workloads.cloudlab.setup_k8s –hostfile path/to/hostfile.json
 The hostfile is a json object of the following format:
+```
 {
 ‘node-0’: {‘host’: ‘kapila1@pc433.emulab.net’, ‘label’: ‘0’},
 ‘node-1’: {‘host’: ‘kapila1@pc544.emulab.net’, ‘label’: ‘1’},
@@ -203,15 +204,14 @@ The hostfile is a json object of the following format:
 ‘node-3’: {‘host’: ‘kapila1@pc441.emulab.net’, ‘label’: ‘3’},
 ‘node-4’: {‘host’: ‘kapila1@pc502.emulab.net’, ‘label’: ‘4’}
 }
-The key is the node name (please adhere to the above naming scheme with node-0 as the control plane node which is the master node) and the each key has a dict which has two keys: 1) host in the format @. This is required because we want to run chaos experiments and therefore want ssh capabilities to kill kubelet on the nodes.
+```
+The key is the node name (please adhere to the above naming scheme with node-0 as the control plane node which is the master node) and each key has a dict which has two keys: 1) `host` and `label`. The `host` key contains the value of format user@host. This refers to how can we ssh into the machine. Note that this information is required because we want to run chaos experiments and therefore want ssh capabilities to kill kubelet on the nodes. The `label` key is used to assign node-labels to Kubernetes nodes so PhoenixController can interface with the k8s scheduler. For example, PhoenixController uses node-affinity to specify which deployment must be scheduled in which pod.
 
-1. label is use to assign labels so PhoenixController can interface with k8s scheduler. By interface, phoenix uses affinity to specify which deployment must be scheduled where.
-
-Once the json file is populated, executing the above command will upload source code to the control-plane node, node-0.
+Once this json file is populated, executing the above command will upload source code to the control-plane node, node-0.
 
 ### Spawning Workloads
 
-Same as Spawning Workloads in the CloudLab setup.
+Same as Spawning Workloads in the [CloudLab](#cloudlab-1) setup. 
 
 ## Benchmarking
 
@@ -246,30 +246,22 @@ Once the cluster environment is ready, we then run tests comparing Phoenix and o
 
 We have results from two environments. Figures 5 and Figures 6 are evaluated on CloudLab and figures 7 and 8 are evaluated on AdaptLab, our benchmarking platform.
 
-We first describe the key steps for generating the results of figure 7 and figure 8 since they can be ran locally:
+We first describe the key steps for generating the results of figure 7 and figure 8 since they can be ran locally and do not have external dependencies:
 1. Download the derived applications from alibaba traces using the following google drive link: https://drive.google.com/drive/folders/1xLULx1vcwZxOISPTOcfaMoj05ux2ysF9?usp=share_link
 
 Alternatively, you can run the following commands using cli:
-
-cd Phoenix/
-pip install gdown
+```
+cd Phoenix/ # cd into the root folder of the repo
+pip install gdown 
 gdown https://drive.google.com/uc?id=1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W
 unzip datasets.zip
+```
 
-1. This folder, datasets/, must be placed in the root directory such that src/ and datasets/ are in the same directory.
-2. Next, open terminal and cd into plotscripts/
-3. Run fig_7.sh. Please read the comments in fig_7.sh to get an overview of how evaluation is performed. This script roughly takes 4-5 hours to execute fully because it first creates the cloud environment to benchmark the results.
-4. Once fig_8a.sh is executed, now run fig_8a.sh to get the results. This script takes abour 1.5-2 hours to execute fully.
-
-Once these results are executed, you should be able to view them in the asplos_25/ folder that is created. The corresponding data and the figures are placed here.
-
-Next, figure 5 can still be reproduced based on a cached cloudlab environment that is included in datasets/cloudlab. This has the key resource, criticality tags, price, and cluster_state files to simulate a failure.
-
-Similar to fig_7 and fig_8a.sh, users can cd into plotscripts/ and run fig_5.sh
-
-This will populate the asplos_25 folder with .png files fig5a.png and fig5b.png.
-
-Note that these results are quite noisy due to the small scale nature and may across multiple runs.
+2. The above command will download a folder, `./datasets`, must be placed in the root directory such that `./src` and `./datasets` are in the same directory.
+3. Next, open terminal and run `cd plotscripts/`
+4. Run `bash fig_7.sh`. Please read the comments in `fig_7.sh` script to get an overview of how evaluation is performed. This script roughly takes 4-5 hours to execute fully because it first creates the cloud environment of 100,000 nodes using the derived application DGs available in `./datasets`.
+5. Once `fig_7.sh` is executed, a new folder of the name `./asplos_25` will be created which will have the experiment results logged into `.csv` files and figures `fig7a.pdf`, `fig7b.pdf`, and `fig7c.png`. 
+6. Similarly, run `bash fig_8a.sh`, `bash fig_8b.sh`, `bash fig_8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine.
 
 ### 3a. Cloudlab
 
