@@ -262,8 +262,8 @@ unzip datasets.zip
 4. Run `bash fig_7.sh`. Please read the comments in `fig_7.sh` script to get an overview of how evaluation is performed. This script roughly takes 4-5 hours to execute fully because it first creates the cloud environment of 100,000 nodes using the derived application DGs available in `./datasets`.
 5. Once `fig_7.sh` is executed, a new folder of the name `./asplos_25` will be created which will have the experiment results logged into `.csv` files and figures `fig7a.pdf`, `fig7b.pdf`, and `fig7c.png`. 
 6. Similarly, run `bash fig_8a.sh`, `bash fig_8b.sh`, `bash fig_8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine.
-
-### 3a. Cloudlab
+<!-- 
+### Cloudlab
 
 Steps:
 1. Start a 25-node cloudlab cluster on d710 machines and copy the list view as follows:
@@ -273,9 +273,9 @@ Steps:
 5. Conduct a healthy run for verification and preparing eval dataset.
 6. Now conduct a benchmarking test on this environment in main for the eval dataset and the cluster environment.
 7. Figure 5 (a) and (b) are ready.
-8. Now conduct a chaos test with Phoenix. Figure 6 (a), (b), and (c) is ready.
+8. Now conduct a chaos test with Phoenix. Figure 6 (a), (b), and (c) is ready. -->
 
-### 3b. Standalone
+<!-- ### Standalone
 
 Steps:
 1. Derive alibaba applications from alibaba traces (this includes: app dags, info aiding resource and criticality tagging.)
@@ -283,16 +283,14 @@ Steps:
 3. Load and run this cluster environment in our benchmarking test in main.
 4. Figures 7 (a), (b), and (c) are ready and figures 8 (c) is ready.
 5. Next, run time-series simulator and figure 8(a) is ready.
-6. Figure 8 (b) requires running the LP at smaller cluster scales.
+6. Figure 8 (b) requires running the LP at smaller cluster scales. -->
 
 ### Alibaba: Extracting Applications from Traces
 
-We use code from this github repository (XXX) to extract application dependency graphs from alibab trace dataset. More specifically, we start with downloading alibaba trace datasets and preprocessing using the matlab file tracesanity.m and store the sanitized traces into a separate csv file called, “alibaba_2021_microservice_traces_7days_preprocessed.csv” which is available to download here.
+We use code from this github [repository](https://github.com/mSvcBench/muBench/tree/main/examples/Alibaba/Matlab) to extract application dependency graphs from alibaba trace dataset. More specifically, we start with downloading alibaba trace datasets and preprocessing using the matlab file `tracesanity.m` and store the sanitized traces into a separate csv file called, `alibaba_2021_microservice_traces_7days_preprocessed.csv` which is available in `./datasets`
 
-Next on these 7days_preprocessed dataset we run the following scripts for extracting the application dependency graphs:
-0. Download “alibaba_2021_microservice_traces_7days_preprocessed.csv” from this link XXX. Size 7.1 GB
-1. Run DataToMatrix.sc. This will create two folders svc_traceid_map and the matrix. This outputs two folders: matrix (287 M) and svc_traceid_map (272M).
-2. MatrixToAppTraces.py
-3. Run AppToServiceGraphs.sc and AppTracesToUniqueCGs.sc
-4. parse_graph_data.py
-5. Fig2LP.py
+Next on this dataset we run the following command for extracting the application dependency graphs:
+
+`python3 -m src.workloads.alibaba.derive_apps.all_in_one`
+
+This command essentially is a re-implementation of `all_in_one.m` in the github [repo](https://github.com/mSvcBench/muBench/tree/main/examples/Alibaba/Matlab).
