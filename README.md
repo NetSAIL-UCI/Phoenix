@@ -16,37 +16,51 @@ You will need:
 3. Gurobi (https://portal.gurobi.com/iam/licenses/request)
 4. gnuplot for plotting fig 7a, and 7b.
 
-1 is optional if your goal is to reproduce the results of the experiments with already prepared alibaba application DGs. Running tasks for #1 takes roughly 10 hours end-to-end. 1 is not in the critical path for reproducing results. (3) and (4) lie in the critical path.
+#1 is optional if your goal is to reproduce the results of the experiments with already prepared alibaba application DGs. Running tasks for #1 takes roughly 10 hours end-to-end. #1 is not in the critical path for reproducing results. #3 and #4 lie in the critical path.
 
 ## Installing Apache Spark
 
 1. Download the apache spark package using the link: https://spark.apache.org/downloads.html
+
 Alternatively, you can run the linux cli command:
-`wget https://dlcdn.apache.org/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz`
-2. Next untar the spark package: `tar -xzvf spark-3.5.3-bin-hadoop3`
+```
+wget https://dlcdn.apache.org/spark/spark-3.5.3/spark-3.5.3-bin-hadoop3.tgz
+```
+2. Next untar the spark package: 
+```
+tar -xzvf spark-3.5.3-bin-hadoop3.tgz
+```
 3. Test out using the linux cli:
-`spark-3.5.3-bin-hadoop3/bin/spark-shell`
+```
+spark-3.5.3-bin-hadoop3/bin/spark-shell
+```
 This command should open the spark-shell.
+
+Troubleshooting: Please read the installation manual in apache spark's documents: https://spark.apache.org/downloads.html
 
 ## Installing Gurobi:
 
 1. Go to the link: [https://portal.gurobi.com/iam/licenses/request](https://portal.gurobi.com/iam/licenses/request)
-2. If you don’t already have an account, you need to create one. You should use your university email address.
+2. If you don’t already have an account, you need to create one. You should use your organization's email address.
 3. Go to `Licenses > Request > Named-User Academic` click the button `GENERATE NOW`.
 4. Once you accept the agreement, a popup will generate with a cli command such as `grbgetkey xxxxx-xxx` Copy this and store it.
-5. Next, go to this link and download the gurobi package depending on your machine: [https://www.gurobi.com/downloads/gurobi-software/](https://www.gurobi.com/downloads/gurobi-software/)
-Using cli, you can run: `wget https://packages.gurobi.com/11.0/gurobi11.0.3_linux64.tar.gz` replace the link depending on your machine and untar it using the command:
-`tar -xzvf gurobi11.0.3_linux64.tar.gz`
-6. Next in linux cli run the previously copied `grbgetkey xxxxx-xxx` command (step 4). This will download a license file.
-7. In order to use GUROBI it needs to be in the path. Run the following commands:
+5. Next, go to this link and download the gurobi package depending on your machine: [https://www.gurobi.com/downloads/gurobi-software/](https://www.gurobi.com/downloads/gurobi-software/).
+6. Follow the instructions in this [link](https://support.gurobi.com/hc/en-us/articles/4534161999889-How-do-I-install-Gurobi-Optimizer) depending on your machine to install gurobi correctly. 
+
+<!-- 6. In order to use GUROBI it needs to be in the path. Run the following commands. Also please use a python version such as 3.11 or 3.12 because gurobipy is not supported in python 3.13.
 
 ```bash
-export GUROBI_HOME=“/path/to/gurobi/linux64”
-export PATH="${PATH}:${GUROBI_HOME}/bin"
+export GUROBI_HOME=path/to/gurobi<VERSION_NAME>/linux64
+export PATH=${PATH}:${GUROBI_HOME}/bin
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"
 ```
 
-**Troubleshooting:** Please read the quickstart_linux.pdf / quickstart_mac.pdf / quickstart_windows.pdf in the downloaded gurobi folder in the docs folder. (Step 5)
+Note that these commands are for linux.
+Please follow instructions for macOS and windows on this page: -->
+
+7. Next in linux cli run the previously copied `grbgetkey xxxxx-xxx` command (step 4). This will download a license file. This step also ensures that gurobi was installed correctly.
+
+<!-- **Troubleshooting:** Please read the quickstart_linux.pdf / quickstart_mac.pdf / quickstart_windows.pdf in the downloaded gurobi folder in the docs folder. (Step 5) -->
 
 ## Installing gnuplot:
 
@@ -63,12 +77,19 @@ If you are a first timer using CloudLab, you should create a CloudLab account us
 
 Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php
 
-Given ongoing high demands and reservation requests in CloudLab, we make Phoenix’s code accessible more generally i.e., users can bring their own Kubernetes cluster environment to run Phoenix. Information for this can be found in [this section](about:blank#bring-your-own-k8s-cluster).
+Given ongoing high demands and reservation requests in CloudLab, we make Phoenix’s code accessible more generally i.e., users can bring their own Kubernetes cluster environment to run Phoenix. Information for this can be found in [this section](#bring-your-own-k8s-cluster).
 
 ## Installing Phoenix
 
-Once the prerequisites have been met, please create a venv environment in python3.
-and install the requirements using the command:
+Once the prerequisites have been met, please create a venv environment in python3. Run the following command:
+
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+(Note:Please use a python version such as 3.10, 3.11, or 3.12 because gurobipy is not supported in python 3.13.)
+and install the requirements using the command: 
 
 `pip3 install -r requirements.txt`
 
