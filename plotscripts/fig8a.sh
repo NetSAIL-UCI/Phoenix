@@ -9,10 +9,12 @@ if [ ! -d "asplos_25" ]; then
 fi
 # Activating venv
 source .venv/bin/activate
-# Run branch fig_8a in main.py to execute a series of commands. 
-# This scipt takes ~10-15 mins on a Mac M2 8 cores, 16GB
-# To-do parallelize time-series for each algorithm.
-python3 src.simulator.benchmarkonline --name Alibaba-10000-SvcP90-CPM --eval datasets/alibaba/AlibabaAppsTest
+
+if [ ! -d "datasets/alibaba/Alibaba-10000-SvcP90-CPM" ]; then
+  python3 -m src.simulator.create_cloud_env --name Alibaba-10000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 10000 --c svcp90 --r cpm --replicas 1
+fi
+
+python3 -m src.simulator.benchmarkonline --name Alibaba-10000-SvcP90-CPM --eval datasets/alibaba/AlibabaAppsTest/eval
 # Capture the end time in seconds
 python3 plotscripts/PlotRTO.py --name Alibaba-10000-SvcP90-CPM
 end_time=$(date +%s)
