@@ -1,5 +1,3 @@
-# README
-
 # Artifact Evaluation for “Cooperative Graceful Degradation in Containerized Clouds” (ASPLOS’25 AE #315)
 
 # 1. Artifact Goals
