@@ -128,6 +128,8 @@ Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the below str
 
 How we derive these folders from Alibaba Cluster traces is described in this [directory](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps).
 
+### Preparing a Cloud Environment using AlibabaApps
+
 We use the `AlibabaAppsTest/` folder and pass it into AdaptLab to emulate a 100,000 node cluster. Here is an example of how this looks:
 
 ```
@@ -148,12 +150,27 @@ There are 2 modes of preparing the real-world experiments:
 2. or by bringing in your own Kubernetes Cluster
 
 We assume users to have some understanding and operational experience with k8s and basic know-how of how to use kubectl commands such as
-kubectl get pods -n overleaf0
+```
+kubectl get pods -n default
 kubectl get svc
 kubectl get nodes
-, etc.
+```
 
-Note: The instructions below assume that you have a 25 node k8s cluster (either cloudlab or your own k8s) with minimum 8 CPUs. But we are in the process of downscaling to be able to run in smaller environments (10 nodes) with fewer application instances (2 instances).
+Note: The instructions below assume that you have a 25 node k8s cluster (either cloudlab or your own k8s) with minimum 8 CPUs on each node to run the 5 instances we discussed in the paper. But we are in the process of downscaling to be able to run in smaller environments (10 nodes) with fewer application instances (2 instances).
+
+### Directory Structure for Real-world experiments
+
+cd into the following directory `src/workloads/cloudlab`. Here is a brief overview of the structure of this sub-directory:
+
+- `./loadgen` contains the scripts for running loadgeneration on the 5 instances.
+- `./phoenix-cloudlab` contains all the required code (such as deploy 5 microservice instances) that needs to be uploaded on the k8s cluster from local.
+- `./setup_cloudlab.py`: This script orchestrates uploading necessary folders from local to cloudlab cluster/
+- `./setup_k8s.py`: Similar to `setup_cloudlab.py` but made generally accessible for readers to bring their own k8s environment.
+- `./setup_utils.py`: utilities required by setup scripts
+
+We encourage readers to glance over the scripts `setup_cloudlab.py` and `setup_k8s.py` to understand the inputs.
+
+We now discuss how to obtain a cloudlab cluster in the next section. If you are bringing your own k8s, then we recommend skipping the [Cloudlab](#cloudlab-1) section and jumping to [Bring your own k8s](#bring-your-own-k8s-cluster)
 
 ## CloudLab
 
@@ -161,65 +178,96 @@ Note: The instructions below assume that you have a 25 node k8s cluster (either 
 
 If you are a first timer using CloudLab, you should create a CloudLab account using your organization’s (preferably a university) email address. Here is the link for creating an account: https://www.cloudlab.us/signup.php. Note that account is first verified and can take some time.
 
-Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php
+Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php (Note that setting ssh keys is critical for orchestrating real-world experiments.)
 
 ### Requesting CloudLab Resource
 
 You can use the CloudLab web UI to start an experiment with the following parameters:
 1. Select the k8s example profile (https://www.cloudlab.us/show-profile.php?project=emulab-ops&profile=k8s).
-2. 25 nodes
+2. Select 25 nodes
 3. Machine Type: d710 machines (in Emulab cluster)
 4. Experiment Link Speed: Any
-5. Click on Finish without inputting time and date to start the setup now. If you would like to schedule it for later then please set these fields.
+5. Click on Finish without inputting time and date to start the setup instantiation now. If you would like to schedule it for later then please set these fields.
 
 ### Uploading Phoenix source code
 
 Once the cloudlab is setup and the resources are running, do the following steps:
 
-1. Open the CloudLab Experiment Page and open the ListView to check the table for the status. All entries in this table must be ‘ready’ and Startup must be ‘finished’.
-2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable.
-3. Execute using the command: python3 -m src.workloads.cloudlab.setup_cloudlab
+1. Open the CloudLab Experiment Page and open the `ListView`. A table will appear with 25 nodes (one entry for each node). All entries in this table must be ‘ready’ and startup column must be ‘finished’ for all 25 entries.
+2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable in `main`.
+3. Execute using the command: `python3 -m src.workloads.cloudlab.setup_cloudlab`
 
-This will upload all the required source code to “node-0”
+This will upload all the required source code to `node-0`
 
-Next, ssh into “node-0” and run the following command
+Next, ssh into `node-0` and run the following command
 bash node-0_startup.sh
 
-This command will download all dependencies that are required for the experiment.
+This command will download all dependencies that are required for running the real-world experiment.
 
-Finally, the successful execution of the setup_cloudlab script will print the IP address of the k8s cluster which is publicly available.
+Finally, the successful execution of the `setup_cloudlab.py` script will print the IP address of the k8s cluster which is publicly accessible. Open this IP address link and a nginx page should appear. This will indicate that cloudlab cluster is publicly available for our loadgeneration module. 
 
-Open this IP address link and a nginx page should appear.
-
-Store the ip address for later use.
+Store the ip address for later use when performing load generation.
 
 ### Spawning workloads
 
-Next, ssh into node-0. All the commands listed in this section are to be executed on node-0.
+Next, ssh into `node-0`. <u>*Unless specified, the commands listed in this section are to be executed on node-0. We will add when a command needs to be executed from local.*</u>
 
 Execute the command:
 
-python3 spawn_workloads.py –hostfile node_info_dict.json
+```
+python3 spawn_workloads.py -–hostfile node_info_dict.json
+```
 
-This command will start the deployment process. You can view the logs associated to this script in the file “spawn.log”
 
-If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command:
+This command will start the deployment process. You can view the logs associated to this script in the file `spawn.log`
 
-python3 cleanup.py –hostfile node_info_dict.json
+If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command. We also `stdout` the progress on terminal which is understandable and users should be able to make out if the code is not progressing. When the code is not progressing, it could be the case that some pods in one of the microservice applications is in a `CrashLoopBackoff` or in `Pending` state. This is where the users (with operational experience of k8s can take some simple measures such as deleting the pod so k8s autmatically restarts it without stopping the script and restarting it) will come in handy. If readers are still not able to debug the error, we recommend first stopping the current script `spawn_workloads.py` and then running the following command:
 
-This will rollback the steps taken. Now restart the script again: spawn_workloads.py.
+```
+python3 cleanup.py –-hostfile node_info_dict.json
+```
+
+This will rollback the steps taken to reach the initial state. Now restart the script again using the above spawn command.
 
 If the issue persists, please report to us with the error.
 
-Once the spawning is complete, you should use the ip address (stored above) to test the following:
+Once the spawning is complete (`stdout` prints All pods are running), you should first check if all namespaces are showing:
 
-Check manually if all workloads are running correctly: ip:30919 (overleaf0), ip:30921 (overleaf1), ip:30923 (overleaf2), ip:30811 (hr0), ip:30812 (hr1).
+```
+kubectl get ns
+```
 
-You can test out anyone of the overleaf instances by logging into it using the credentials:
+This should list five new namespaces: `overleaf0`, `overleaf1`, `overleaf2`, `hr0`, and `hr1`. Next, check all pods in each namespace are in the `Running` state.
+
+Finally, **from the `local` machine** use the ip address (stored above) to test the following:
+
+1. Check manually if all workloads are running correctly: ip:30919 (overleaf0), ip:30921 (overleaf1), ip:30923 (overleaf2), ip:30811 (hr0), ip:30812 (hr1).
+2. You can test out anyone of the Overleaf instances by logging into it using the credentials:
+```
 username: user1@netsail.uci.edu
 password: iamuser1
+```
+And navigate all the pages to check that they are correctly working. 
+3. Repeat this step for other overleaf and HR instances.
 
-And navigate all the pages to check that they are correctly working. (Repeat this step for other overleaf and HR instances).
+If the spawning is complete, we recommend users to validate for themselves that containerized degradation is amenable in Overleaf by deleting the `spelling` deployment in `overleaf0` using the command on `node-0` such as:
+
+```
+kubectl delete deployment spelling -n overleaf0
+```
+
+and go back to overleaf0, in your `local` machine and open ip:30919. When editing the document, the spell-check will not appear. Similarly, users can delete other stateless deployments too such as `tags` without crashing the application. We encourage readers to add overleaf application in their experiments too because it is a real-world microservice based application unlike existing microservice benchmarks which are mainly demo applications. The k8s manifest files for Overleaf can be found in `./src/workloads/cloudlab/phoenix-cloudlab/overleaf_kubernetes`.
+
+Lastly, we encourage users to conduct one healthy run from loadgenerator module in the `local` machine.
+
+```
+python3 -m src.workloads.cloudlab.loadgen.load_generator firstrun 155.98.38.33 false
+
+```
+
+By running this script in your `local` machine will create a folder named `firstrun` (the first param) with several log files. The second param is the ip address and the third param mean you want to run load-generation without running chaos experiments hence the field `false`.
+
+This concludes the workload preparation for real-world experiments. 
 
 ## Bring your own k8s cluster
 
@@ -235,8 +283,9 @@ If you decide to bring your own k8s cluster, you should have the minimum specs i
 ### Uploading Phoenix Source Code
 
 If all these requirements are satisfied, please run the following command:
-
-python3 -m src.workloads.cloudlab.setup_k8s –hostfile path/to/hostfile.json
+```
+python3 -m src.workloads.cloudlab.setup_k8s –-hostfile path/to/hostfile.json
+```
 The hostfile is a json object of the following format:
 ```
 {
