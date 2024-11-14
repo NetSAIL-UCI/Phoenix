@@ -1,8 +1,166 @@
 import logging
 from src.simulator.utils import *
 import random
-from src.simulator.standalone import *
+import re
+from src.simulator.benchmark import load_gym
+import copy
+import argparse
 
+def get_cluster_state(del_nodes, pod_to_node, pods):
+    new_pod_to_node = {}
+    del_nodes = set(del_nodes)
+    pods = set(pods)
+    to_delete = 0
+    for key in pod_to_node.keys():
+        eff_key = key.split(".")[0]
+        if eff_key in pods:
+            if pod_to_node[key] not in del_nodes:
+                new_pod_to_node[key] = pod_to_node[key]
+        else:
+            to_delete += 1
+    return new_pod_to_node
+
+
+def run_scheduler(destroyed_state, logger, sname="bestfit"):
+    # from LPScheduler import LPWM, LPScheduler
+    from src.phoenix.scheduler.PhoenixSchedulerv3 import PhoenixSchedulerv3
+    from src.baselines.KubeScheduler import KubeScheduler, KubeSchedulerMostEmpty
+    # if "fair" == sname:
+    #     scheduler = AdvancedHeuristicv3(destroyed_state, allow_del=True, allow_mig=False)
+    # elif "priority" == sname:
+    #     scheduler = PhoenixScheduler(destroyed_state, remove_asserts=False)
+    print("In scheduler {}".format(sname))
+    # if "lp" == sname:
+        # scheduler = LPScheduler(destroyed_state)
+    if sname == "phoenixfair":
+            scheduler = PhoenixSchedulerv3(destroyed_state, remove_asserts=True, allow_mig=True)
+    elif sname == "phoenixcost":
+            scheduler = PhoenixSchedulerv3(destroyed_state, remove_asserts=True, allow_mig=True)
+    elif sname == "fair":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "fair":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "priority":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "priorityDG":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "default":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=False)
+    elif sname == "fairDGminus":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "priorityminus":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
+    elif sname == "defaultminus":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=False)
+    else:
+        raise Exception("Scheduler does not match one of the implemented scheduling policies..")
+    pod_to_node = scheduler.scheduler_tasks["sol"]
+    final_pods = scheduler.scheduler_tasks["final_pods"]
+    # logger.debug("Scheduler {} pod_to_node output is {}".format(sname, pod_to_node))
+    logger.debug("[Simulator-Scheduler] | Input = {} | Scheduler = {} | Output = {}".format(destroyed_state, sname, pod_to_node))
+    # final_pod_list = [pod for pod in pod_to_node.keys()]
+    time_taken_scheduler = scheduler.time_breakdown["end_to_end"]
+    print("Time taken by scheduler {}".format(time_taken_scheduler))
+    return pod_to_node, final_pods, time_taken_scheduler
+
+
+def run_planner(deployment, gym, destroyed_state, cluster, logger, pname="cats"):
+    remaining_capacity = destroyed_state["remaining_capacity"]
+    graphs, capacity, dag_id, indi_caps = load_graphs_metadata_from_folder(deployment)
+    from src.baselines.Heuristics import Priority, Fair, FairDG, Default, PriorityDG
+    from src.phoenix.planner.PhoenixPlanner2 import PhoenixPlanner, PhoenixGreedy
+    from src.baselines.fair_allocation import water_filling
+    trial_num = re.findall(r"\d+", deployment)[-1]
+    water_fill, _ = water_filling(indi_caps, int(remaining_capacity) / len(graphs))
+    if "phoenixfair" == pname:
+        # logger.debug("Input to PhoenixPlanner is remaining capacity = {}".format(remaining_capacity))
+        planner = PhoenixPlanner(graphs, int(remaining_capacity), ratio=True)
+    elif "phoenixcost" == pname:
+        # logger.debug("Input to PhoenixPlanner is remaining capacity = {}".format(remaining_capacity))
+        planner = PhoenixGreedy(graphs, int(remaining_capacity), ratio=True)
+    elif "fair" == pname:
+        # logger.debug("Input to FairPlanner is remaining capacity = {}".format(remaining_capacity))
+        planner = FairDG(graphs, int(remaining_capacity))
+    elif "priority" == pname:
+        # logger.debug("Input to PriorityPlanner is remaining capacity = {}".format(remaining_capacity))
+        planner = Priority(graphs, int(remaining_capacity))
+    elif "default" == pname:
+        # logger.debug("Input to DefaultPlanner is remaining capacity = {}".format(remaining_capacity))
+        planner = Default(graphs, int(remaining_capacity))
+    else:
+        raise Exception("Planner name does not match one of the implemented policies..")
+    nodes_to_activate = planner.nodes_to_activate
+    time_breakdown = planner.time_breakdown
+    logger.debug("[Simulator-Planner] | Total Capacity = {} | Remaining Capacity = {} | FairnessR/CostR = {} | Individual Graph Cap = {} | Planner = {} | Output = {}".format(capacity, remaining_capacity, list(water_fill), indi_caps, pname, nodes_to_activate))
+    return nodes_to_activate, time_breakdown["end_to_end"]
+
+
+
+def run_system(destroyed, deployment, cluster, logger,  p_name="cats", s_name="cas", planner_only=False):
+    destroyed_state = dict(destroyed)
+    nodes_to_activate, time_planner = run_planner(
+                    deployment,
+                    "",
+                    destroyed_state,
+                    cluster,
+                    logger,
+                    pname=p_name,
+                )
+    print("Pods scheduled by planner: {}".format(len(nodes_to_activate)))
+    print("planner time = {} for {}".format(time_planner, p_name))
+    list_of_pods = [
+                    str(tup[0]) + "-" + str(tup[1]) for tup in nodes_to_activate
+                ]
+    # logger.debug("[Simulator-System] | Input = {} | Output = {} | Planner = {} | Time-taken = {}".format(destroyed_state, nodes_to_activate, p_name, time_planner))
+    # logger.info("{} planner time-taken: {}".format(p_name, time_planner))
+    # print(len(list_of_pods))
+    # print("planner outputted: {}".format(len(nodes_to_activate)))
+    destroyed_state["list_of_pods"] = list_of_pods
+    destroyed_state["pod_resources"] = {
+        pod: cluster["pod_resources"][pod] for pod in list_of_pods
+    }
+    destroyed_state["microservices_deployed"] = {}
+    
+    destroyed_state["num_pods"] = len(list_of_pods)
+    pod_to_node = {}
+    for key in cluster["pod_to_node"].keys():
+        for pod in cluster["pod_to_node"][key]:
+            pod_to_node[pod] = key
+    
+    destroyed_state["pod_to_node"] = get_cluster_state(
+        destroyed_state["nodes_deleted"],
+        pod_to_node,
+        list_of_pods,
+    )
+    original_pod_to_node = copy.deepcopy(destroyed_state["pod_to_node"])
+    destroyed_state["container_resources"] = {}
+    for tup in cluster["microservices_deployed"]:
+        container, res = tup
+        destroyed_state["container_resources"][container] = res
+    final_pods_list = list_of_pods
+    planner_utilized = (
+                        sum(
+                            [
+                                destroyed_state["pod_resources"][pod]
+                                for pod in list_of_pods
+                            ]
+                        )
+                        / destroyed_state["original_capacity"]
+                    )
+    time_scheduler = 0
+    destroyed_state["list_of_pods_resources"] = [cluster["pod_resources"][pod] for pod in list_of_pods]
+    if not planner_only:
+        # logger.debug("Input to {} scheduler is {}".format(s_name, dict(destroyed_state)))
+        pod_to_node, final_pods, time_scheduler = run_scheduler(dict(destroyed_state), logger,  sname=s_name)
+        print("Pods scheduled by scheduler: {}".format(len(final_pods)))
+        # logger.debug("{} scheduler outputted: {}".format(s_name, final_pods_list))
+        # logger.info("{} scheduler time-taken: {}".format(s_name, time_scheduler))
+        # logger.debug("[Simulator-System] | Input = {} | Output = {} | Scheduler = {} | Time-taken = {}".format(dict(destroyed_state), final_pods_list, s_name, time_scheduler))
+    # print("scheduler outputted: {}".format(len(final_pods_list)))
+    return pod_to_node, final_pods, time_planner + time_scheduler, planner_utilized, original_pod_to_node
+    
+    
+    
 def load_file_counter(eval_app_folder):
     types, count = [], []
     with open(eval_app_folder+"/meta.csv", "r") as file:
@@ -143,9 +301,6 @@ class AlibabaSimulator:
         self.active_nodes_lookup = {}
         self.trace_lookup = {}
         self.compute_alibaba_model(deployment)
-        # self.load_environment(deployment, resources, model)
-        # print("here")
-    
         
     def compute_alibaba_model(self, deployment):
         graphs, capacity, dag_id, indi_caps = load_graphs_metadata_from_folder(deployment)
@@ -181,20 +336,6 @@ class AlibabaSimulator:
         total_freq = sum(self.frequencies)
         self.probabilities = [freq / total_freq for freq in self.frequencies]
             
-    def compute_active_nodes(self, deployment, resources, system):
-        cluster = load_cluster_state(deployment.replace("apps", ""))
-        logging.basicConfig(filename='random.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-        logger = logging.getLogger()
-        for nodes_to_del in sorted(resources):
-            destroyed_state = get_destroyed_state(
-                cluster, int(nodes_to_del * cluster["num_nodes"])
-            )
-
-            pod_to_node, final_pods, _, _, _ = run_system(dict(destroyed_state), deployment, cluster, logger, p_name=system, s_name=system, planner_only=False)
-            pods_formatted = [(int(s.split("-")[0]), int(s.split("-")[1])) for s in final_pods]
-            self.active_nodes_lookup[nodes_to_del] = pods_formatted
-            print("{} activated {} nodes at failure mode of {}".format(system, len(pods_formatted), nodes_to_del))
-    
     def build_fixed_state(self, deleted_nodes, fixed_pod_to_node):
         new_pod_to_node = copy.deepcopy(fixed_pod_to_node)
         del_nodes_set = set(deleted_nodes)
@@ -351,8 +492,8 @@ class AlibabaSimulator:
             "nodes_deleted": [],
         }
         return cluster_state
-    
-    def fetch_active_pods_v2(self, cluster):
+
+    def fetch_active_pods(self, cluster):
         pod_replicas = {}
         for node, pods in cluster["pod_to_node"].items():
             for pod in pods:
@@ -375,33 +516,11 @@ class AlibabaSimulator:
         pods_formatted = [(int(s.split("-")[0]), int(s.split("-")[1])) for s in final_pods]
         return pods_formatted
     
-    def fetch_active_pods(self):
-        
-        final_pods = []
-        visited = set()
-        
-        for pod in self.cluster_state["pod_to_node"].keys():
-            pod_id = pod.split(".")[0]
-            if pod_id not in visited:
-                visited.add(pod_id)
-                final_pods.append(pod_id)
-        
-        pods_formatted = [(int(s.split("-")[0]), int(s.split("-")[1])) for s in final_pods]
-        return pods_formatted
-        
-        
-        
-    
     def play(self, time_range, intervals, deployment, system):
         cluster = load_cluster_state(deployment.replace("apps", ""))
         self.cluster_state = self.preprocess(cluster)
         self.nodes_to_del = 0.0
-        c1_success_ratios = []
-        all_success_ratios = []
-        net_c1_fracs = []
         c1_success_throughput = []
-        all_success_throughput = []
-        net_all_fracs = []
         resource_values = []
         time_taken = None
         destroyed_cluster_state, fixed_cluster_state = {}, {}
@@ -418,22 +537,15 @@ class AlibabaSimulator:
                 self.cluster_state = copy.deepcopy(fixed_cluster_state)
             else:
                 self.cluster_state = copy.deepcopy(destroyed_cluster_state)
-            # active_nodes = self.fetch_active_pods()
-            active_nodes = self.fetch_active_pods_v2(cluster)
-            # requests = self.sample_requests(100000000)
+            active_nodes = self.fetch_active_pods(cluster)
             requests = self.sample_requests(1000)
-            c1_success, all_success, net_c1_frac, net_all_frac, c1_success_count, all_success_count = self.check_coverage(requests, active_nodes)
-            c1_success_ratios.append(c1_success)
-            all_success_ratios.append(all_success)
-            net_c1_fracs.append(net_c1_frac)
-            net_all_fracs.append(net_all_frac)
+            c1_success_count = self.check_coverage(requests, active_nodes)
             c1_success_throughput.append(c1_success_count)
-            all_success_throughput.append(all_success_count)
             resource_values.append(curr_nodes_to_del)
             if time_taken is not None:
                 time_taken = time_taken - 1
             
-        return c1_success_ratios, all_success_ratios, net_c1_fracs, net_all_fracs, c1_success_throughput, all_success_throughput, resource_values
+        return c1_success_throughput, resource_values
 
                 
     def get_resource_at(self, time_instant, intervals):
@@ -453,10 +565,7 @@ class AlibabaSimulator:
         return req_tups
 
     def check_coverage(self, requests, active_nodes):
-        success = [0]*len(self.graphs)
-        total = [0]*len(self.graphs)
         c1_success = [0]*len(self.graphs)
-        c1_total = [0]*len(self.graphs)
         for request_tup in requests:
             choice_tup, freq = request_tup
             app_id, graph_num = choice_tup
@@ -464,135 +573,95 @@ class AlibabaSimulator:
             trace, _ = self.trace_lookup[app_ind][graph_num]
             app_active_nodes = [tup[1] for tup in active_nodes if tup[0] == app_id]
             if set(trace).issubset(app_active_nodes):
-                success[app_id] += freq
                 if set(trace).issubset(self.svc_criticalities[app_id]):
                     c1_success[app_id] += freq
-            total[app_id] += freq
-            if set(trace).issubset(self.svc_criticalities[app_id]):
-                    c1_total[app_id] += freq
-            # total += freq
-        # return success/total
-        # all_fracs = np.array(success)/np.array(total)
-        # c1_fracs = np.array(c1_success)/np.array(c1_total)
-        c1_fracs = safe_divide(np.array(c1_success), np.array(c1_total))
-        all_fracs = safe_divide(np.array(success), np.array(total))
-        c1_cum_frac = np.sum(c1_success)/np.sum(c1_total)
-        all_cum_frac = np.sum(success)/np.sum(total)
-        return np.mean(c1_fracs), np.mean(all_fracs), c1_cum_frac, all_cum_frac, np.sum(c1_success), np.sum(success)
+        return np.sum(c1_success)
 
 
-def play_timeseries():
-    gym = "datasets/alibaba/Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000"
-    # gym = "/scratch/kapila1/osdi24/osdi24_gyms_test/template_envs/AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-GoogleTaggingP90-100000"
+def run_online_benchmark(cloud_name, models, eval):
+    dir = "datasets/alibaba"
+    log_dir = "asplos_25/"
+    cloud_path = dir + "/{}".format(cloud_name)
+    
+    deployments = load_gym(cloud_path, rng=1)
 
-    deployments = load_gym(gym, rng=1)
-    config_name = gym.split("/")[-1]
-
-    models = ["phoenixcost", "priority","fairDG", "default", "phoenixfair"]
-    # models = ["phoenixcost", "fairDG", "phoenixfair", "priority", "default"]
-    # models = ["phoenixcost", "fairDG" ,"priority", "default", "phoenixfair"]
-    # models = ["phoenixcost"]
-    # models = ["phoenixfair"]
-    # models = ["fairDG"]
-    # models = ["priority"]
-    # models = ["default"]
-    # models = ["phoenixcost", "phoenixfair"]
-
-
-
-    # models = ["fair", "priorityDG"]
     for model in models:
-        # with open("asplos_25/all_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        # out.close()
-        
-        # with open("asplos_25/RTONSDI4/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-            
-        # with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        # out.close()
-        
-        # with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        # out.close()
-        
-        # with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
-        #     out.write("dep_id,time_vals,resource_vals,availability_vals\n")
-        # out.close()
-        
-        with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "w") as out:
+        with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, cloud_name), "w") as out:
             out.write("dep_id,time_vals,resource_vals,availability_vals\n")
         out.close()
 
 
     for dep_id, deployment in enumerate(deployments):
-        # TWO INPUTS
-        resource_changes = [0.0, 0.1, 0.2, 0.3, 0.4, 0.7, 0.8, 0.9]
-        
-        # intervals = [
-        #     (0, 1, 0.0),
-        #     (1, 10, 0.5)
-        #     # (50, 60, 0.7),
-        #     # (15, 18, 0.8),
-        #     # (18, 20, 0.9)
-        # ]
-        # t = 11
         intervals = [
             (0, 120, 0.0),
             (120, 300, 0.3),
             (300, 360, 0.4),
             (360, 550, 0.2),
             (550, 600, 0.35)
-            # (15, 18, 0.8),
-            # (18, 20, 0.9)
         ]
         t = 601
-        
-        # intervals = [
-        #     (0, 1, 0.3),
-        #     (1, 2, 0.4)
-        # ]
-        # model = "phoenixcost"
         sim = AlibabaSimulator(deployment)
         
         for model in models: 
-            # sim.compute_active_nodes(deployment, resource_changes, model)
-            c1_values, all_values, net_c1_values, net_all_values,  c1_success_count, all_success_count, resource_values = sim.play(t, intervals, deployment, model)
-            print(c1_success_count)
-        
-            # with open("asplos_25/c1_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-            #     for i in range(len(c1_values)):
-            #         t = i
-            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_values[i])))
-            #     out.close()
-                
-            # with open("asplos_25/RTONSDI4/all_mean_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-            #     for i in range(len(all_values)):
-            #         t = i
-            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_values[i])))
-            #     out.close()
-                
-            # with open("asplos_25/RTONSDI4/c1_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-            #     for i in range(len(c1_values)):
-            #         t = i
-            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_c1_values[i])))
-            #     out.close()
-                
-            # with open("asplos_25/RTONSDI4/all_net_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-            #     for i in range(len(all_values)):
-            #         t = i
-            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(net_all_values[i])))
-            #     out.close()
-                
-            with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-                for i in range(len(c1_values)):
+            c1_success_count, resource_values = sim.play(t, intervals, deployment, model)
+            # print(c1_success_count)
+            with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, cloud_name), "a") as out:
+                for i in range(len(c1_success_count)):
                     t = i
                     out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_success_count[i])))
                 out.close()
                 
-            # with open("asplos_25/RTONSDI4/all_throughput_stepwise_{}_{}.csv".format(model, config_name), "a") as out:
-            #     for i in range(len(all_values)):
-            #         t = i
-            #         out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(all_success_count[i])))
-            #     out.close()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process input parameters.")
+    parser.add_argument("--name", type=str, help="provide the cloud environment, you'd like to benchmark.")
+    parser.add_argument(
+        '--eval', 
+        type=str,  # Allows multiple arguments to be passed
+        required=True, 
+        help="For online simulation, it is important to give app traces and services for load generation."
+    )
+    parser.add_argument(
+        '--algs', 
+        type=str,  # Allows multiple arguments to be passed
+        required=False, 
+        help="List of algorithms to benchmark (optional). If not specified will run on all algs."
+    )
+    args = parser.parse_args()
+    cloud_name = args.name
+    if args.algs is None:
+        models = ["phoenixcost", "phoenixfair", "priority","fair","default"]
+    else:
+        models = args.algs.split(',')
+    
+    eval = args.eval
+    dir = "datasets/alibaba"
+    log_dir = "asplos_25/"
+    cloud_path = dir + "/{}".format(cloud_name)
+    
+    deployments = load_gym(cloud_path, rng=1)
+
+    for model in models:
+        with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, cloud_name), "w") as out:
+            out.write("dep_id,time_vals,resource_vals,availability_vals\n")
+        out.close()
+
+
+    for dep_id, deployment in enumerate(deployments):
+        intervals = [
+            (0, 120, 0.0),
+            (120, 300, 0.3),
+            (300, 360, 0.4),
+            (360, 550, 0.2),
+            (550, 600, 0.35)
+        ]
+        t = 601
+        sim = AlibabaSimulator(deployment)
+        
+        for model in models: 
+            c1_success_count, resource_values = sim.play(t, intervals, deployment, model)
+            # print(c1_success_count)
+            with open("asplos_25/c1_throughput_stepwise_{}_{}.csv".format(model, cloud_name), "a") as out:
+                for i in range(len(c1_success_count)):
+                    t = i
+                    out.write("{},{},{},{}\n".format(str(dep_id),str(t),str(resource_values[i]), str(c1_success_count[i])))
+                out.close()

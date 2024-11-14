@@ -59,7 +59,7 @@ set yrange[0:1]
 
 
 
-plot "asplos_25/processedData/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000_revenue.txt" u (($1*100)):2 title "PhoenixCost" with linespoints lc rgb "#e74c3c" lw 2 lt 2 pointtype 2, \
+plot "asplos_25/processedData/revenue.txt" u (($1*100)):2 title "PhoenixCost" with linespoints lc rgb "#e74c3c" lw 2 lt 2 pointtype 2, \
 '' u (($1*100)):3 title "PhoenixFair" with linespoints lc rgb "#3498db" lw 2 lt 3 dashtype "_" pointtype 10, \
  '' u (($1*100)):4 title "Priority" with linespoints lc rgb "#f39c12" lw 2 dashtype "--" pointtype 11, \
   '' u (($1*100)):5 title "Fair" with linespoints lc rgb "#9b59b6" lw 2  dashtype ".." pointtype 6, \

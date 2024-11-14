@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import argparse
 
 def processFinalOutput(df, folder, vals=None):
     if vals is None:
@@ -57,20 +58,20 @@ def processDf(df, val, levels, fname):
     for header in cols:
         if val in header:
             required.append(header)
-    print(required)
+    # print(required)
     
     if "path" in val or "util" in val:
         s = df.groupby([var])[required].mean()
-        print(s)
+        # print(s)
         # s = s * 100
         s = s[s.index.isin(levels)]
-        print(s) 
+        # print(s) 
     elif "resilience_score" in val or "util" in val:
         s = df.groupby([var])[required].mean()
-        print(s)
+        # print(s)
         # s = s * 100
         s = s[s.index.isin(levels)]
-        print(s)   
+        # print(s)   
     elif "crit" in val or "revenue" in val:
         # required2 = required
         s = df.groupby('deployment_id')[required].apply(lambda x: (x) / (x.max()))
@@ -93,12 +94,12 @@ def processDf(df, val, levels, fname):
         s = s[s['failure_level'].isin(levels)]
         # print(s)
         s = s.groupby([var])[required2[:-1]].mean()
-        print(s)
+        # print(s)
     
     # print(s)
     # print(s)
     s = s.values
-    print(s)
+    # print(s)
     # print(levels)
     # # # print(s)
     levels = np.array(levels).reshape(len(levels), 1)
@@ -131,12 +132,12 @@ def data_side_by_side(f1, f2, failure_levels=[0.1, 0.5, 0.9]):
     
     
 
-def process_fig_7_data():
+def process_fig_7_data(cloud_name):
     alibaba = True
     raw = "asplos_25/"
     if alibaba:
         # f1 = "eval_results_AlibabaOSDI-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-FreqTaggingP90AtMost-100000.csv"
-        f1 = "eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-10000.csv"
+        f1 = "eval_results_{}.csv".format(cloud_name)
         f_1 = raw + f1
         df = pd.read_csv(f_1)
     else:
@@ -159,4 +160,24 @@ def process_fig_7_data():
         else:
             fname2 = outf+"{}_{}.txt".format(f2.replace(".csv", ""), val)
             processDf(df, val, failure_levels, fname2)
+    
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Process input parameters.")
+    parser.add_argument("--name", type=str, help="provide the cloud environment, you'd like to benchmark.")
+    args = parser.parse_args()
+    cloud_name = args.name
+    
+    read_dir = "asplos_25/"
+    
+    fname = "eval_results_{}.csv".format(cloud_name)
+    df = pd.read_csv(read_dir+fname)
+    outf = "asplos_25/processedData/" # for gnuplot
+    
+    failure_levels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    vals = ["resilience_score", "revenue"]
+    
+    for val in vals:
+        fname1 = outf+"{}.txt".format(val)
+        processDf(df, val, failure_levels, fname1)
     

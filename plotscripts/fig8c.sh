@@ -12,8 +12,11 @@ if [ ! -d "asplos_25/processedData" ]; then
 fi
 # Activating venv
 source .venv/bin/activate
-# Run branch fig_8c in main.py to execute a series of commands
-# This scipt takes ~1 mins on a Mac M2 8 cores, 16GB
-python3 main.py --c fig_8c
-# Use gnuplot to plot the populated data in processedData directory.
+
+if [ ! -d "datasets/alibaba/Alibaba-100000-SvcP90-CPM" ]; then
+  python3 -m src.simulator.create_cloud_env --name Alibaba-100000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 100000 --c svcp90 --r cpm --replicas 1
+fi
+
+python3 -m src.simulator.benchmark --name Alibaba-10000-SvcP90-CPM --algs phoenixfair,phoenixfair_default --p true
+
 gnuplot plotscripts/fig_8c.plt

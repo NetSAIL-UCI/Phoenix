@@ -12,8 +12,9 @@ source .venv/bin/activate
 # Run branch fig_8a in main.py to execute a series of commands. 
 # This scipt takes ~10-15 mins on a Mac M2 8 cores, 16GB
 # To-do parallelize time-series for each algorithm.
-python3 main.py --c fig_8a
+python3 src.simulator.benchmarkonline --name Alibaba-10000-SvcP90-CPM --eval datasets/alibaba/AlibabaAppsTest
 # Capture the end time in seconds
+python3 plotscripts/PlotRTO.py --name Alibaba-10000-SvcP90-CPM
 end_time=$(date +%s)
 # Calculate and display the duration in seconds
 duration=$((end_time - start_time))

@@ -38,7 +38,7 @@ set style histogram cluster gap 1
 
 set boxwidth 0.95 relative
 
-plot 'asplos_25/processedData/eval_results_Alibaba-UniformServerLoad-Peak-CPMNoLimitPodResourceDist-ServiceTaggingP90-100000_packing_efficiency.txt' using 2 title "PhoenixPlanner" lc rgb "#3498db" fillstyle pattern 3,\
+plot 'asplos_25/processedData/packing_efficiency.txt' using 2 title "PhoenixPlanner" lc rgb "#3498db" fillstyle pattern 3,\
 '' using 3 title "PhoenixScheduler" lc rgb "#e74c3c" fillstyle pattern 1,\
 '' using 4 title "DefaultScheduler" lc rgb "#2ecc71" fillstyle pattern 2
 # '' using 5 title "LP" lc rgb "#6495ED"

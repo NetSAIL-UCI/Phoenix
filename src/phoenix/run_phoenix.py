@@ -15,6 +15,8 @@ def run_planner(remaining_capacity, graphs, algorithm="phoenixcost"):
         planner = Priority(graphs, int(remaining_capacity))
     elif "default" == algorithm:
         planner = Default(graphs, int(remaining_capacity))
+    elif "phoenixfair_default" == algorithm:
+        planner = PhoenixPlanner(graphs, int(remaining_capacity), ratio=True)
     # elif "fairDGminus" == algorithm:
     #     planner = FairDGMinus(graphs, int(remaining_capacity))
     # elif "priorityminus" == algorithm:
@@ -43,6 +45,8 @@ def run_scheduler(destroyed_state, algorithm="phoenixcost"):
         scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
     elif algorithm == "default":
         scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=False)
+    elif algorithm == "phoenixfair_default":
+        scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
     # elif algorithm == "fairDGminus":
     #     scheduler = KubeSchedulerMostEmpty(destroyed_state, remove_asserts=True, allow_del=True)
     # elif algorithm == "priorityminus":
@@ -95,6 +99,15 @@ def plan_and_schedule_adaptlab(app_info, cluster_state, algorithm="phoenixcost")
         list_of_pods = [
                     str(tup[0]) + "-" + str(tup[1]) for tup in pods
                 ]
+        planner_utilized = (
+                        sum(
+                            [
+                                cluster_state["pod_resources"][pod]
+                                for pod in list_of_pods
+                            ]
+                        )
+                        / cluster_state["original_capacity"]
+                    )
         cluster_state["list_of_pods"] = list_of_pods
         cluster_state["num_pods"] = len(list_of_pods)
         
@@ -113,7 +126,8 @@ def plan_and_schedule_adaptlab(app_info, cluster_state, algorithm="phoenixcost")
             "target_state": proposed_pod_to_node,
             "planner_output": pods,
             "final_pods": final_pods,
-            "time_taken": ptime + stime
+            "time_taken": ptime + stime,
+            "planner_utilized": planner_utilized
         }
     return plan
     

@@ -13,13 +13,20 @@ if [ ! -d "asplos_25/processedData" ]; then
 fi
 # Activating venv
 source .venv/bin/activate
-# Run branch fig_7 in main.py to execute a series of commands
-# This scipt takes ~5 mins on a Mac M2 8 cores, 16GB
-python3 main.py --c fig_7
+
+# The below command creates a cloud environment of 100,000 nodes, criticality scheme is svcp90, resource scheme is cpm.
+python3 -m src.simulator.create_cloud_env --name Alibaba-10000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 10000 --c svcp90 --r cpm --replicas 1
+
+# The below script benchmarks all the algorithms shown in figure 7 of the paper for all failure rates
+python3 -m src.simulator.benchmark --name Alibaba-10000-SvcP90-CPM
+
+python3 plotscripts/analyzeSystem.py --name Alibaba-10000-SvcP90-CPM
+
+python3 plotscripts/fairness_plots.py --name Alibaba-10000-SvcP90-CPM # fig7c is plotted here.
+
 # Use gnuplot to plot the populated data in processedData directory.
 gnuplot plotscripts/fig7a.plt
 gnuplot plotscripts/fig7b.plt
-# fig7c is plotted in the call to main.py
 # Capture the end time in seconds
 end_time=$(date +%s)
 # Calculate and display the duration in seconds
