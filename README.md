@@ -72,7 +72,7 @@ and install the requirements using the command:
 
 `pip3 install -r requirements.txt`
 
-If you’re goal is to reproduce the results of the paper, jump directly to [Instructions](about:blank#3-instructions) section.
+If you’re goal is to reproduce the results of the paper, jump directly to [Reproducing key results](#reproducing-key-results) section.
 
 ## Directory Structure
 
@@ -85,7 +85,7 @@ If you’re goal is to reproduce the results of the paper, jump directly to [Ins
 
 # Kick-the-tires instructions
 
-We strongly recommend completing the steps specified in this [section](#preparing-workloads) for kick-the-tires deadline.
+We strongly recommend completing the steps specified in the section [Preparing Workloads](#preparing-workloads) by kick-the-tires deadline.
 
 # Preparing Workloads
 
@@ -95,7 +95,7 @@ Currently, we implement two environments to test the efficacy of Phoenix:
 
 ## AdaptLab
 
-In AdaptLab, we emulate a 100,000 node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). We make these 18 microservice dependency graphs available for downloading to reproduce the results in the paper. Currently, we have made it available on google drive but after the artefact evaluation is over, we will publish it on a public archive so it is available. The link for google drive is here: https://drive.google.com/file/d/1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W/view?usp=share_link. In this link, you will find a datasets.zip file which you can download, unzip, and place in the root folder (adjacent to the `./src` folder). Alternatively, you can use cli and execute the following commands:
+In AdaptLab, we emulate a 100,000 node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). We make these 18 microservice dependency graphs available for downloading to reproduce the results in the paper. Currently, we have made it available on google drive but after the artefact evaluation is over, we will publish it on a public archive. The link for google drive is here: https://drive.google.com/file/d/1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W/view?usp=share_link. In this link, you will find a `datasets.zip` file which you can download, unzip, and place in the root folder (adjacent to the `./src` folder). Alternatively, you can use cli and execute the following commands:
 
 ```
 cd Phoenix/ # cd into the root folder of the repo
@@ -106,7 +106,7 @@ unzip datasets.zip
 
 ### Understanding Derived Apps 
 
-Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the below structure. Note to users: please go over our paper's section 6.1 for a clear understanding. For example, knowing different resource tagging and criticality tagging will make it easier for the reader to understand the structure of this directory.
+Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the structure specified below. Note to users: please go over our paper's section 6.1 for a clear understanding. For example, knowing different resource tagging and criticality tagging will make it easier for the reader to understand the structure of this directory.
 
 - `./apps`  contains the dependency graphs (networkx graph objects) stored in `.pickle` files
 - `./eval`
@@ -124,7 +124,7 @@ Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the below str
 
 (Please ignore any other folders because those are not used in reproducing the results in Section 6).
 
-How we derive these folders from Alibaba Cluster traces is described in this [directory](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps).
+How we derive the `AlibabaAppsTest` folder using alibaba Cluster traces is described [here](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps). (Note that for following the next steps, deriving the applications is not critical. Readers can use the AlibabaAppsTest that we make available. However, we encourage readers to know how these applications are derived.)
 
 ### Preparing a Cloud Environment using AlibabaApps
 
@@ -135,7 +135,7 @@ cd Phoenix/
 python3 -m src.simulator.create_cloud_env --name Alibaba-10000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 10000 --c svcp90 --r cpm --replicas 1
 ```
 
-Running the above commands, will create a new cloud environment in the `datasets/Alibaba` folder of the name `Alibaba-10000-SvcP90-CPM`. We pass several parameters in the above command such as `--n` as 10,000, `--r` as cpm, `--c` svcp90. These are required parameters when creating a cloud environment in AdaptLab. `--replicas 1` imply create only one instance of such a cluster. To understand how we pack the applications to this cluster we recommend looking into our code in `./src/simulator/create_cloud_env.py`.
+Running the above commands, will create a new cloud environment in the `datasets/Alibaba` folder of the name `Alibaba-10000-SvcP90-CPM`. We pass several parameters in the above command such as `--n` as 10,000, `--r` as cpm, `--c` svcp90. These are required parameters when creating a cloud environment in AdaptLab. To understand how we pack the applications to this cluster we recommend looking into our code in `./src/simulator/create_cloud_env.py`.
 
 Readers are recommended to build other cloud environments by passing different parameters to generate different types of cloud environments.
 
@@ -162,7 +162,7 @@ cd into the following directory `src/workloads/cloudlab`. Here is a brief overvi
 
 - `./loadgen` contains the scripts for running loadgeneration on the 5 instances.
 - `./phoenix-cloudlab` contains all the required code (such as deploy 5 microservice instances) that needs to be uploaded on the k8s cluster from local.
-- `./setup_cloudlab.py`: This script orchestrates uploading necessary folders from local to cloudlab cluster/
+- `./setup_cloudlab.py`: This script orchestrates uploading necessary folders from local to cloudlab cluster.
 - `./setup_k8s.py`: Similar to `setup_cloudlab.py` but made generally accessible for readers to bring their own k8s environment.
 - `./setup_utils.py`: utilities required by setup scripts
 
@@ -189,20 +189,20 @@ You can use the CloudLab web UI to start an experiment with the following parame
 
 ### Uploading Phoenix source code
 
-Once the cloudlab is setup and the resources are running, do the following steps:
+Once the CloudLab account is setup with ssh key generation, do the following steps:
 
-1. Open the CloudLab Experiment Page and open the `ListView`. A table will appear with 25 nodes (one entry for each node). All entries in this table must be ‘ready’ and startup column must be ‘finished’ for all 25 entries.
-2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable in `main`.
+1. Open the CloudLab Experiment Page and open the `ListView`. A table will appear with 25 nodes (one entry for each node). All entries in this table must be `ready` and startup column must be `finished` for all 25 entries.
+2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable in `main`. For illustration, we show how the list_view_str should look like after the copy and paste is performed [here](https://github.com/NetSAIL-UCI/Phoenix/blob/main/src/workloads/cloudlab/setup_cloudlab.py).
 3. Execute using the command: `python3 -m src.workloads.cloudlab.setup_cloudlab`
 
 This will upload all the required source code to `node-0`
 
 Next, ssh into `node-0` and run the following command
-bash node-0_startup.sh
+`bash node-0_startup.sh`
 
 This command will download all dependencies that are required for running the real-world experiment.
 
-Finally, the successful execution of the `setup_cloudlab.py` script will print the IP address of the k8s cluster which is publicly accessible. Open this IP address link and a nginx page should appear. This will indicate that cloudlab cluster is publicly available for our loadgeneration module. 
+Finally, the successful execution of the `setup_cloudlab.py` script will print the IP address of the k8s cluster which is publicly accessible. Open this IP address link and a nginx page should appear. This will indicate that cloudlab cluster is publicly available (to be later used by our loadgeneration module). 
 
 Store the ip address for later use when performing load generation.
 
@@ -219,7 +219,7 @@ python3 spawn_workloads.py -–hostfile node_info_dict.json
 
 This command will start the deployment process. You can view the logs associated to this script in the file `spawn.log`
 
-If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command. We also `stdout` the progress on terminal which is understandable and users should be able to make out if the code is not progressing. When the code is not progressing, it could be the case that some pods in one of the microservice applications is in a `CrashLoopBackoff` or in `Pending` state. This is where the users (with operational experience of k8s can take some simple measures such as deleting the pod so k8s autmatically restarts it without stopping the script and restarting it) will come in handy. If readers are still not able to debug the error, we recommend first stopping the current script `spawn_workloads.py` and then running the following command:
+If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command. We also `stdout` the progress on terminal which is understandable and users should be able to determine if the code is not progressing. When the code is not progressing, it is likely that some pods in one of the microservice applications is in a `CrashLoopBackoff` or in `Pending` state. To debug this step, users with operational experience of k8s can take some simple measures such as deleting the pod so k8s autmatically restarts it without stopping the script and restarting it, will be beneficial. If readers are still not able to debug the error, we recommend first stopping the current script `spawn_workloads.py` and then running the following command:
 
 ```
 python3 cleanup.py –-hostfile node_info_dict.json
@@ -229,7 +229,7 @@ This will rollback the steps taken to reach the initial state. Now restart the s
 
 If the issue persists, please report to us with the error.
 
-Once the spawning is complete (`stdout` prints All pods are running), you should first check if all namespaces are showing:
+Once the spawning is complete (`stdout` prints `All pods are running`), you should first check if all the namespaces being displayed:
 
 ```
 kubectl get ns
@@ -254,16 +254,18 @@ If the spawning is complete, we recommend users to validate for themselves that 
 kubectl delete deployment spelling -n overleaf0
 ```
 
-and go back to overleaf0, in your `local` machine and open ip:30919. When editing the document, the spell-check will not appear. Similarly, users can delete other stateless deployments too such as `tags` without crashing the application. We encourage readers to add overleaf application in their experiments too because it is a real-world microservice based application unlike existing microservice benchmarks which are mainly demo applications. The k8s manifest files for Overleaf can be found in `./src/workloads/cloudlab/phoenix-cloudlab/overleaf_kubernetes`.
+Next, from your `local` machine, open ip:30919. Here, the user should confirm that while editing the documents, the spell-check no longer appears. Similarly, users can delete other stateless deployments such as `tags` without crashing the application. 
 
-Lastly, we encourage users to conduct one healthy run from loadgenerator module in the `local` machine.
+We encourage readers to add overleaf application in their future experiments because unlike existing microservice benchmarks which are mainly demo applications, Overleaf is a real-world application. The k8s manifest files for Overleaf can be found in `./src/workloads/cloudlab/phoenix-cloudlab/overleaf_kubernetes`.
+
+Lastly, we encourage users to conduct one "healthy run" from loadgenerator module in the `local` machine.
 
 ```
 python3 -m src.workloads.cloudlab.loadgen.load_generator firstrun 155.98.38.33 false
 
 ```
 
-By running this script in your `local` machine will create a folder named `firstrun` (the first param) with several log files. The second param is the ip address and the third param mean you want to run load-generation without running chaos experiments hence the field `false`.
+By running this script in your `local` machine will create a folder named `firstrun` (the first param) with several log files. The second param is the ip address. The third param is set to `false` which instructs to run loadgeneration without performing chaos i.e., deleting nodes at random.
 
 This concludes the workload preparation for real-world experiments. 
 
