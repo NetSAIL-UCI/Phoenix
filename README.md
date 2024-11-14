@@ -85,6 +85,10 @@ If you’re goal is to reproduce the results of the paper, jump directly to [Ins
     - `./src/workloads` contains the code for preparing workloads for the real-world experiment and deriving application dependency graphs for AdaptLab cloud environment to emulate large real-world clusters.
 - `./plotscripts`  contains the scripts for reproducing key figures in the paper.
 
+# Kick-the-tires instructions
+
+We strongly recommend completing the steps specified in this [section](#preparing-workloads) for kick-the-tires deadline.
+
 # Preparing Workloads
 
 Currently, we implement two environments to test the efficacy of Phoenix:
@@ -93,11 +97,49 @@ Currently, we implement two environments to test the efficacy of Phoenix:
 
 ## AdaptLab
 
-In AdaptLab, we emulate a 100K node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). Refer to Section 3 in this paper to walk through how we derive the dependency graphs for Alibaba.
+In AdaptLab, we emulate a 100,000 node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). We make these 18 microservice dependency graphs available for downloading to reproduce the results in the paper. Currently, we have made it available on google drive but after the artefact evaluation is over, we will publish it on a public archive so it is available. The link for google drive is here: https://drive.google.com/file/d/1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W/view?usp=share_link. In this link, you will find a datasets.zip file which you can download, unzip, and place in the root folder (adjacent to the `./src` folder). Alternatively, you can use cli and execute the following commands:
 
-Since these 18 microservice-based applications do not have information such as criticality of each microservice deployment and its resource information, we build a simulator that can test out different criticality tagging schemes and different resource assignment models. Currently, we support two automated criticality tagging schemes (Service-Level Tagging and Frequency-Based Tagging). Similarly, for resource assignment we support two models (Calls Per Minute - based and Azure Bin Packing).
+```
+cd Phoenix/ # cd into the root folder of the repo
+pip install gdown 
+gdown https://drive.google.com/uc?id=1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W
+unzip datasets.zip
+```
 
-Once these workloads are prepared we pass them to our benchmarking module to obtain how different baselines perform.
+### Understanding Derived Apps 
+
+Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the below structure. Note to users: please go over our paper's section 6.1 for a clear understanding. For example, knowing different resource tagging and criticality tagging will make it easier for the reader to understand the structure of this directory.
+
+- `./apps`  contains the dependency graphs (networkx graph objects) stored in `.pickle` files
+- `./eval`
+    - `./eval/app0`
+        - `./eval/app0/eval` (we will rename this to `trace_graphs`). This folder is required to evaluate time simulation (fig8a).
+        - `./eval/app0/service_graphs`: required for Service-Level criticality tagging.
+    .
+    .
+    .
+    - `./eval/app17`
+        - `./eval/app0/eval` (we will rename this to `trace_graphs`). This folder is required to evaluate time simulation (fig8a).
+        - `./eval/app0/service_graphs`: required for Service-Level criticality tagging.
+- `./cpm`: required for Calls Per Minute resource assignment.
+- `./c1_nodes_atmost`: required for Frequency-based criticality tagging.
+
+(Please ignore any other folders because those are not used in reproducing the results in Section 6).
+
+How we derive these folders from Alibaba Cluster traces is described in this [directory](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps).
+
+We use the `AlibabaAppsTest/` folder and pass it into AdaptLab to emulate a 100,000 node cluster. Here is an example of how this looks:
+
+```
+cd Phoenix/
+python3 -m src.simulator.create_cloud_env --name Alibaba-10000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 10000 --c svcp90 --r cpm --replicas 1
+```
+
+Running the above commands, will create a new cloud environment in the `datasets/Alibaba` folder of the name `Alibaba-10000-SvcP90-CPM`. We pass several parameters in the above command such as `--n` as 10,000, `--r` as cpm, `--c` svcp90. These are required parameters when creating a cloud environment in AdaptLab. `--replicas 1` imply create only one instance of such a cluster. To understand how we pack the applications to this cluster we recommend looking into our code in `./src/simulator/create_cloud_env.py`.
+
+Readers are recommended to build other cloud environments by passing different parameters to generate different types of cloud environments.
+
+This concludes the preparation of workloads for AdaptLab.
 
 ## Real-world experiment
 
@@ -285,7 +327,7 @@ Steps:
 5. Next, run time-series simulator and figure 8(a) is ready.
 6. Figure 8 (b) requires running the LP at smaller cluster scales. -->
 
-### Alibaba: Extracting Applications from Traces
+<!-- ### Alibaba: Extracting Applications from Traces
 
 We use code from this github [repository](https://github.com/mSvcBench/muBench/tree/main/examples/Alibaba/Matlab) to extract application dependency graphs from alibaba trace dataset. More specifically, we start with downloading alibaba trace datasets and preprocessing using the matlab file `tracesanity.m` and store the sanitized traces into a separate csv file called, `alibaba_2021_microservice_traces_7days_preprocessed.csv` which is available in `./datasets`
 
@@ -293,4 +335,4 @@ Next on this dataset we run the following command for extracting the application
 
 `python3 -m src.workloads.alibaba.derive_apps.all_in_one`
 
-This command essentially is a re-implementation of `all_in_one.m` in the github [repo](https://github.com/mSvcBench/muBench/tree/main/examples/Alibaba/Matlab).
+This command essentially is a re-implementation of `all_in_one.m` in the github [repo](https://github.com/mSvcBench/muBench/tree/main/examples/Alibaba/Matlab). -->
