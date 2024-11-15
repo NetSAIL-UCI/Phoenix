@@ -17,6 +17,6 @@ if [ ! -d "datasets/alibaba/Alibaba-100000-SvcP90-CPM" ]; then
   python3 -m src.simulator.create_cloud_env --name Alibaba-100000-SvcP90-CPM --apps datasets/alibaba/AlibabaAppsTest --n 100000 --c svcp90 --r cpm --replicas 1
 fi
 
-python3 -m src.simulator.benchmark --name Alibaba-10000-SvcP90-CPM --algs phoenixfair,phoenixfair_default --p true
+python3 -m src.simulator.benchmark --name Alibaba-100000-SvcP90-CPM --algs phoenixfair,phoenixfair_default --p true
 
 gnuplot plotscripts/fig_8c.plt
