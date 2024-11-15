@@ -241,16 +241,18 @@ Next, ssh into `node-0`. <u>*Unless specified, the commands listed in this secti
 Execute the command:
 
 ```
-python3 spawn_workloads.py -–hostfile node_info_dict.json
+python3 spawn_workloads.py --hostfile node_info_dict.json
 ```
 
 
 This command will start the deployment process. You can view the logs associated to this script in the file `spawn.log`
 
-If some issues arise such as the deployments are not correctly running and the spawning script is not proceeding forward, we recommend stopping the script and executing the command. We also `stdout` the progress on terminal which is understandable and users should be able to determine if the code is not progressing. When the code is not progressing, it is likely that some pods in one of the microservice applications is in a `CrashLoopBackoff` or in `Pending` state. To debug this step, users with operational experience of k8s can take some simple measures such as deleting the pod so k8s autmatically restarts it without stopping the script and restarting it, will be beneficial. If readers are still not able to debug the error, we recommend first stopping the current script `spawn_workloads.py` and then running the following command:
+If issues arise, such as deployments not running correctly or the spawning script stalling, we recommend stopping the script. We also provide progress updates via `stdout` on the terminal, which should be clear enough for users to identify if the code is not progressing. If the code appears stuck, it's likely that some pods within one of the microservice applications are in a `CrashLoopBackOff` or `Pending` state.
+
+For users familiar with Kubernetes, a simple debugging step is to delete the affected pod, allowing Kubernetes to automatically restart it without interrupting the script. This approach often resolves the issue without the need to restart the entire script. If problems persist and readers are unable to debug the error, we suggest stopping the current `spawn_workloads.py` script and running the following command:
 
 ```
-python3 cleanup.py –-hostfile node_info_dict.json
+python3 cleanup.py --hostfile node_info_dict.json
 ```
 
 This will rollback the steps taken to reach the initial state. Now restart the script again using the above spawn command.
@@ -273,7 +275,7 @@ Finally, **from the `local` machine** use the ip address (stored above) to test 
 username: user1@netsail.uci.edu
 password: iamuser1
 ```
-And navigate all the pages to check that they are correctly working. 
+And navigate all the pages to check that they are correctly working. For example, try editing a document by writing some words with incorrect spellings to check if spell-check works correctly.
 3. Repeat this step for other overleaf and HR instances.
 
 If the spawning is complete, we recommend users to validate for themselves that containerized degradation is amenable in Overleaf by deleting the `spelling` deployment in `overleaf0` using the command on `node-0` such as:
@@ -282,18 +284,18 @@ If the spawning is complete, we recommend users to validate for themselves that 
 kubectl delete deployment spelling -n overleaf0
 ```
 
-Next, from your `local` machine, open ip:30919. Here, the user should confirm that while editing the documents, the spell-check no longer appears. Similarly, users can delete other stateless deployments such as `tags` without crashing the application. 
+Next, from your `local` machine, open `ip_addr:30919`. Here, the user should confirm that while editing the documents, the spell-check no longer appears. Similarly, users can delete other stateless deployments such as `tags` without crashing the application. 
 
 We encourage readers to add overleaf application in their future experiments because unlike existing microservice benchmarks which are mainly demo applications, Overleaf is a real-world application. The k8s manifest files for Overleaf can be found in `./src/workloads/cloudlab/phoenix-cloudlab/overleaf_kubernetes`.
 
 Lastly, we encourage users to conduct one "healthy run" from loadgenerator module in the `local` machine.
 
 ```
-python3 -m src.workloads.cloudlab.loadgen.load_generator firstrun 155.98.38.33 false
+python3 -m src.workloads.cloudlab.loadgen.load_generator firstrun 155.98.38.33 false 60
 
 ```
 
-By running this script in your `local` machine will create a folder named `firstrun` (the first param) with several log files. The second param is the ip address. The third param is set to `false` which instructs to run loadgeneration without performing chaos i.e., deleting nodes at random.
+By running this script in your `local` machine will create a folder named `firstrun` (the first param) with several log files. The second param is the ip address. The third param is set to `false` which instructs to run loadgeneration without performing chaos i.e., deleting nodes at random. Lastly, the 60 denotes that the script is ran for 60 seconds.
 
 This concludes the workload preparation for real-world experiments. 
 
