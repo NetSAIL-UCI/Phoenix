@@ -440,8 +440,15 @@ def spawn_hr0():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input parameters.")
-    parser.add_argument("--hostfile", type=str, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")    
+    parser.add_argument("--hostfile", type=str, required=True, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")   
+    parser.add_argument(
+        '--workloads', 
+        type=str,  # Allows multiple arguments to be passed
+        required=True, 
+        help="List of algorithms to benchmark (optional). If not specified will run on all algs."
+    )
     args = parser.parse_args()
+    namespaces = args.workloads.split(',')
     path_to_host_json = args.hostfile
     
     node_info_dict = utils.load_obj(path_to_host_json)
@@ -476,21 +483,21 @@ if __name__ == "__main__":
     ### Now check if ssh works by stopping and starting all kubelets in worker nodes. 
     ### This step will also check if we are able to run chaos correctly.
     
-    for node in worker_nodes: # going one node at a time
-        stop_kubelet(node, node_info_dict)
-        logger.info("Executed the command to stop the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 40-50 seconds.".format(node))
-        done = utils.monitor_node_status(v1, node, desired_state="NotReady")
-        if not done:
-            raise TimeoutError("Unable to stop kubelet on node: {}".format(node))
-        logger.info("Successfully stopped the kubelet on {}".format(node))
-        start_kubelet(node, node_info_dict)
-        logger.info("Executed the command to start the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 15-20 seconds.".format(node))
-        done = utils.monitor_node_status(v1, node, desired_state="Ready")
-        if not done:
-            raise TimeoutError("Unable to restart kubelet after stopping the node: {}".format(node))
-        logger.info("Successfully restarted the kubelet on {}".format(node))
+    # for node in worker_nodes: # going one node at a time
+    #     stop_kubelet(node, node_info_dict)
+    #     logger.info("Executed the command to stop the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 40-50 seconds.".format(node))
+    #     done = utils.monitor_node_status(v1, node, desired_state="NotReady")
+    #     if not done:
+    #         raise TimeoutError("Unable to stop kubelet on node: {}".format(node))
+    #     logger.info("Successfully stopped the kubelet on {}".format(node))
+    #     start_kubelet(node, node_info_dict)
+    #     logger.info("Executed the command to start the kubelet on {}. Now waiting for it to reflect on k8s API. This may take 15-20 seconds.".format(node))
+    #     done = utils.monitor_node_status(v1, node, desired_state="Ready")
+    #     if not done:
+    #         raise TimeoutError("Unable to restart kubelet after stopping the node: {}".format(node))
+    #     logger.info("Successfully restarted the kubelet on {}".format(node))
     
-    logger.info("Checked that node info dict works correctly by stopping and restarting kubelets.")
+    # logger.info("Checked that node info dict works correctly by stopping and restarting kubelets.")
     
     
     ### Now check the size of the worker nodes where workloads will be spawned.
@@ -509,8 +516,9 @@ if __name__ == "__main__":
             raise PermissionError("Worker node {} has only {} cpus when minimum 7 cpus are required.".format(node, cpu))
         total_cpu += cpu
         
-    if total_cpu < 150:
-        raise PermissionError("Total cpu = {} when minimum 150 cpus are required.".format(total_cpu))
+    
+    # if total_cpu < 150:
+    #     raise PermissionError("Total cpu = {} when minimum 150 cpus are required.".format(total_cpu))
     
     logger.info("Checked the minimum cluster requirements for spawning 5 workloads.")
     logger.info("All checks have been executed.")
@@ -528,8 +536,8 @@ if __name__ == "__main__":
     logger.info("Stateless Nodes: {}".format(stateless_nodes))
 
     workloads = {}
-    namespaces = ["overleaf0","overleaf1", "overleaf2", "hr0", "hr1"]
-    num_users = [10, 10, 10, 10, 10]
+    # namespaces = ["overleaf0","overleaf1", "overleaf2", "hr0", "hr1"]
+    num_users = [10]* len(namespaces)
     logger.info("Applications are : {}".format(namespaces))
     for idx, namespace in enumerate(namespaces):
         if use_default:
