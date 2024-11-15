@@ -24,10 +24,11 @@ callg=readtable(alibaba_trace);
 mb_trace_stats_seq = create_app_traces_for_mbench(app_traces,"traces-mbench/seq",0);
 ```
 
-In the snippet mentioned above, we utilize their code to sanitize the traces and do not modify the `tracesanity.m `script. The output of this script, `alibaba_2021_microservice_traces_7days_preprocessed.csv`, can be found in the `./datasets` directory.
+In the snippet mentioned above, we use their code to sanitize the traces and do not modify the `tracesanity.m `script. The output of this script, `alibaba_2021_microservice_traces_7days_preprocessed.csv`, can be downloaded [here](https://drive.google.com/file/d/1xfKLC2eozKtvT4hSU_ZC5XA_qtEkzHCa/view?usp=share_link). We recommend users to download, unzip and place these sanitized traces, `.csv` format, for the next steps in the `datasets/alibaba/` directory. (We will open-source this dataset as well.)
 
-We implemented lines 3 and 4 from the snippet in SanitizedTracesToMatrix.sc, which generates a matrix. This matrix is then used as input for the Python script `MatrixToApp.py`, which performs spectral graph clustering to determine the optimal number of applications. Our results identified 18 distinct applications.
 
-Next, we perform post-processing to determine which services and traces belong to each application. This is done using the Scala scripts `AppToServiceGraphs.sc` and `AppTracesToUniqueCGs.sc`. The outputs from these scripts are then passed to the Python script `create_app_dags.py`.
+We implemented lines 3 and 4 from the snippet in the Apache Spark script `SanitizedTracesToMatrix.sc`, which generates a matrix. This matrix is then used as input for the Python script `MatrixToApp.py`, which performs spectral graph clustering to determine the optimal number of applications. Our results identified 18 distinct applications. (However, this number can vary as the final matrix on which sepctral clustering runs is of the size `1500*1500`.)
 
-The `create_app_dags.py` script generates the necessary folders and files that are used to set up the cloud environments and perform all the required downstream tasks.
+Next, we perform post-processing to determine which services and traces belong to each application. This is done using the Apache Spark scripts `AppToServiceGraphs.sc` and `AppTracesToUniqueCGs.sc`. The outputs from these scripts are then passed to the Python script `create_app_dags.py`.
+
+The `create_app_dags.py` script generates the necessary folders and files (refer to `datasets/alibaba/AlibabaAppsTest`) that are used to set up the cloud environments and perform all the required downstream tasks.
