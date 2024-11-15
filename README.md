@@ -214,7 +214,7 @@ You can use the CloudLab web UI to start an experiment with the following parame
 Once the CloudLab account is setup with ssh key generation, do the following steps:
 
 1. Open the CloudLab Experiment Page and open the `ListView`. A table will appear with 25 nodes (one entry for each node). All entries in this table must be `ready` and startup column must be `finished` for all 25 entries.
-2. Starting from the second row (excluding the header row) copy all the rows at once and paste in the src/workloads/cloudlab/setup_cloudlab.py in list_view_str variable in `main`. For illustration, we show how the list_view_str should look like after the copy and paste is performed [here](https://github.com/NetSAIL-UCI/Phoenix/blob/main/src/workloads/cloudlab/setup_cloudlab.py).
+2. Starting from the second row (excluding the header row) copy all the rows and replace the existing value in `list_view_str` in the `src/workloads/cloudlab/setup_cloudlab.py` with the copied value. Please note that after replacing the `list_view_str` should look similar. 
 3. Execute using the command: `python3 -m src.workloads.cloudlab.setup_cloudlab`
 
 This will upload all the required source code to `node-0`
