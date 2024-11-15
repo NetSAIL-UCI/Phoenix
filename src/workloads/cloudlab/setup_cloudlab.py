@@ -61,56 +61,6 @@ echo "Done! Press Enter twice"
 
 """
     return s
-
-def startup_cloudlab():
-    list_view_str = """node-24	pc431	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc431.emulab.net 		
-node-20	pc418	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc418.emulab.net 		
-node-21	pc427	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc427.emulab.net 		
-node-22	pc543	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc543.emulab.net 		
-node-23	pc448	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc448.emulab.net 		
-node-11	pc436	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc436.emulab.net 		
-node-10	pc524	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc524.emulab.net 		
-node-13	pc513	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc513.emulab.net 		
-node-12	pc435	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc435.emulab.net 		
-node-15	pc426	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc426.emulab.net 		
-node-14	pc530	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc530.emulab.net 		
-node-17	pc534	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc534.emulab.net 		
-node-16	pc494	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc494.emulab.net 		
-node-19	pc440	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc440.emulab.net 		
-node-18	pc553	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc553.emulab.net 		
-node-5	pc556	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc556.emulab.net 		
-node-4	pc502	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc502.emulab.net 		
-node-7	pc478	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc478.emulab.net 		
-node-6	pc545	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc545.emulab.net 		
-node-1	pc544	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc544.emulab.net 		
-node-0	pc433	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc433.emulab.net 		
-node-3	pc441	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc441.emulab.net 		
-node-2	pc551	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc551.emulab.net 		
-node-9	pc417	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc417.emulab.net 		
-node-8	pc479	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc479.emulab.net 		
-
-"""
-    node_info_dict = setup_utils.get_node_info_dict(list_view_str)
-    # print(node_info_dict)
-    setup_utils.dump_object_as_json(node_info_dict, NODE_INFO_DICT)
-    s = label_nodes(node_info_dict)
-    
-    s1 = label_istio_file()
-    # label worker nodes -- all nodes excluding node-0
-    with open("src/workloads/cloudlab/phoenix-cloudlab/node-0_startup.sh", "w") as file:
-        file.write(s)
-    file.close()
-    
-    setup_utils.send_dir(node_info_dict['node-0']['host'], "src/workloads/cloudlab/phoenix-cloudlab/")
-    
-    cmd = f"rsync -avz --relative src/phoenix src/baselines {node_info_dict['node-0']['host']}:~"
-    setup_utils.run_cmd(cmd)
-
-    # # # get ip of cloudlab cluster 
-    ip = get_ip(node_info_dict['node-0']['host'])
-
-    print("The IP address for the cluster is {}. (Store it for later use!)".format(ip))
-    
     
 if __name__ == "__main__":
     """
