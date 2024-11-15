@@ -95,6 +95,15 @@ and install the requirements using the command:
 
 If you’re goal is to reproduce the results of the paper, jump directly to [Reproducing key results](#reproducing-key-results) section.
 
+Once installed run the following commands to create a new directory datasets.
+
+```
+cd Phoenix/
+mkdir datasets
+mkdir datasets/alibaba
+mkdir datasets/cloudlab
+```
+
 ## Directory Structure
 
 - `./src`  contains the full source code
@@ -103,9 +112,6 @@ If you’re goal is to reproduce the results of the paper, jump directly to [Rep
     - `./src/simulator` contains the codebase of AdaptLab to create several cloud environments, benchmark different algorithms, and evaluate them.
     - `./src/workloads` contains the code for preparing workloads for the real-world experiment and deriving application dependency graphs for AdaptLab cloud environment to emulate large real-world clusters.
 - `./plotscripts`  contains the scripts for reproducing key figures in the paper.
-- `./datasets` contains two folders
-    - `./datasets/alibaba` is empty currently
-    - `./datasets/cloudlab` is also empty
 
 # Kick-the-tires instructions
 
