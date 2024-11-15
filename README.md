@@ -75,7 +75,7 @@ Please follow instructions for macOS and windows on this page: -->
 
 If you are a first timer using CloudLab, you should create a CloudLab account using your organization’s (preferably a university) email address. Here is the link for creating an account: [https://www.cloudlab.us/signup.php](https://www.cloudlab.us/signup.php). Note that account is first verified and can take some time.
 
-Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php
+Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php (Note that setting ssh keys is critical for orchestrating real-world experiments.)
 
 Given ongoing high demands and reservation requests in CloudLab, we make Phoenix’s code accessible more generally i.e., users can bring their own Kubernetes cluster environment to run Phoenix. Information for this can be found in [this section](#bring-your-own-k8s-cluster).
 
@@ -103,6 +103,9 @@ If you’re goal is to reproduce the results of the paper, jump directly to [Rep
     - `./src/simulator` contains the codebase of AdaptLab to create several cloud environments, benchmark different algorithms, and evaluate them.
     - `./src/workloads` contains the code for preparing workloads for the real-world experiment and deriving application dependency graphs for AdaptLab cloud environment to emulate large real-world clusters.
 - `./plotscripts`  contains the scripts for reproducing key figures in the paper.
+- `./datasets` contains two folders
+    - `./datasets/alibaba` is empty currently
+    - `./datasets/cloudlab` is also empty
 
 # Kick-the-tires instructions
 
@@ -116,13 +119,13 @@ Currently, we implement two environments to test the efficacy of Phoenix:
 
 ## AdaptLab
 
-In AdaptLab, we emulate a 100,000 node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). We make these 18 microservice dependency graphs available for downloading to reproduce the results in the paper. Currently, we have made it available on google drive but after the artefact evaluation is over, we will publish it on a public archive. The link for google drive is here: https://drive.google.com/file/d/1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W/view?usp=share_link. In this link, you will find a `datasets.zip` file which you can download, unzip, and place in the root folder (adjacent to the `./src` folder). Alternatively, you can use cli and execute the following commands:
+In AdaptLab, we emulate a 100,000 node cluster running several microservice-based applications to emulate real-world public clouds. We derive 18 microservice applications from Alibaba 2021 cluster traces using the methodology described in this [paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9774016). We make these 18 microservice dependency graphs available for downloading to reproduce the results in the paper. Currently, we have made it available on google drive but after the artifact evaluation is over, we will publish it on a public archive. The link for google drive is here: https://drive.google.com/file/d/1hu9pil9gdqIavm1a1qi0Fn6V0NRxg80l/view?usp=share_link. In this link, you will find a zipper folder named `AlibabaAppsTest.zip` which you can download, unzip, and place in the `datasets/alibaba` so you're final output should be `datasets/alibaba/AlibabaAppsTest`. Alternatively, you can use cli and execute the following commands:
 
 ```
-cd Phoenix/ # cd into the root folder of the repo
+cd Phoenix/datasets/alibaba
 pip install gdown 
-gdown https://drive.google.com/uc?id=1O2ygQPzwjRpyzdeiUQLnTMo7axhaDv8W
-unzip datasets.zip
+gdown https://drive.google.com/uc?id=1hu9pil9gdqIavm1a1qi0Fn6V0NRxg80l
+unzip AlibabaAppsTest.zip
 ```
 
 ### Understanding Derived Apps 
@@ -134,18 +137,16 @@ Under the path, `./datasets/alibaba/AlibabaAppsTest` you will find the structure
     - `./eval/app0`
         - `./eval/app0/eval` (we will rename this to `trace_graphs`). This folder is required to evaluate time simulation (fig8a).
         - `./eval/app0/service_graphs`: required for Service-Level criticality tagging.
-    .
-    .
-    .
+    - ... (similarly all folders from app1 to app16)
     - `./eval/app17`
-        - `./eval/app0/eval` (we will rename this to `trace_graphs`). This folder is required to evaluate time simulation (fig8a).
-        - `./eval/app0/service_graphs`: required for Service-Level criticality tagging.
+        - `./eval/app17/eval` (we will rename this to `trace_graphs`). This folder is required to evaluate time simulation (fig8a).
+        - `./eval/app17/service_graphs`: required for Service-Level criticality tagging.
 - `./cpm`: required for Calls Per Minute resource assignment.
 - `./c1_nodes_atmost`: required for Frequency-based criticality tagging.
 
 (Please ignore any other folders because those are not used in reproducing the results in Section 6).
 
-How we derive the `AlibabaAppsTest` folder using alibaba Cluster traces is described [here](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps). (Note that for following the next steps, deriving the applications is not critical. Readers can use the AlibabaAppsTest that we make available. However, we encourage readers to know how these applications are derived.)
+How we derive the `AlibabaAppsTest` folder using alibaba Cluster traces is described [here](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps). (Note that for following the next steps, deriving the applications is not critical. Readers can use the AlibabaAppsTest that we make available. However, we encourage readers to go over how these applications are derived [here](https://github.com/NetSAIL-UCI/Phoenix/tree/main/src/workloads/alibaba/derive_apps).)
 
 ### Preparing a Cloud Environment using AlibabaApps
 
@@ -193,11 +194,11 @@ We now discuss how to obtain a cloudlab cluster in the next section. If you are 
 
 ## CloudLab
 
-### Setting up CloudLab
+<!-- ### Setting up CloudLab
 
 If you are a first timer using CloudLab, you should create a CloudLab account using your organization’s (preferably a university) email address. Here is the link for creating an account: https://www.cloudlab.us/signup.php. Note that account is first verified and can take some time.
 
-Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php (Note that setting ssh keys is critical for orchestrating real-world experiments.)
+Once the account is approved, you should setup ssh private and public keys to be able to access CloudLab machines. Here is the link for adding public keys: https://www.cloudlab.us/ssh-keys.php (Note that setting ssh keys is critical for orchestrating real-world experiments.) -->
 
 ### Requesting CloudLab Resource
 
