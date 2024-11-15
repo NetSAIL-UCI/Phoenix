@@ -359,12 +359,16 @@ Once the cluster environment is ready, we then run tests comparing Phoenix and o
 
 We have results from two environments. Figures 5 and Figures 6 are evaluated on CloudLab and figures 7 and 8 are evaluated on AdaptLab, our benchmarking platform.
 
+### AdaptLab
+
 We first describe the key steps for generating the results of figure 7 and figure 8 since they can be ran locally and do not have external dependencies:
 
 1. Next, open terminal and run `cd plotscripts/`
-2. Run `bash fig_7.sh`. Please read the comments in `fig_7.sh` script to get an overview of how evaluation is performed. This script roughly takes 4-5 hours to execute fully because it first creates the cloud environment of 100,000 nodes using the derived application DGs available in `./datasets`.
-3. Once `fig_7.sh` is executed, a new folder of the name `./asplos_25` will be created which will have the experiment results logged into `.csv` files and figures `fig7a.pdf`, `fig7b.pdf`, and `fig7c.png`. 
-4. Similarly, run `bash fig_8a.sh`, `bash fig_8b.sh`, `bash fig_8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine.
+2. Run `bash fig7.sh`. Please read the comments in `fig7.sh` script to get an overview of how evaluation is performed. This script roughly takes 30 minutes ours to execute fully because it first creates the cloud environment of 100,000 nodes using the derived application DGs available in `./datasets`.
+3. Once `fig7.sh` is executed, a new folder of the name `./asplos_25` will be created which will have the experiment results logged into `.csv` files and figures `fig7a.pdf`, `fig7b.pdf`, and `fig7c.png`. 
+4. Similarly, run `bash fig8a.sh`, `bash fig8b.sh`, `bash fig8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine.
+
+
 <!-- 
 ### Cloudlab
 
