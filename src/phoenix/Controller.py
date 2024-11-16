@@ -10,13 +10,14 @@ class PhoenixController:
     def __init__(self, state):
         self.workloads = state["workloads"]
         self.nodes_to_monitor = state["nodes_to_monitor"]
-        logging.basicConfig(filename='controller.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - {} - %(message)s'.format("[Phoenix]"))
+        logging.basicConfig(filename='controller.log', level=logging.INFO, filemode='w',  format='%(asctime)s - %(levelname)s - {} - %(message)s'.format("[Phoenix]"))
         self.logger = logging.getLogger()
         config.load_kube_config()
         self.kubeclient = client
         self.kubecoreapi = client.CoreV1Api()
         self.ref_failed_state, _, _ = utils.check_for_failed_nodes(self.kubecoreapi) # Keep a reference so we can detect changes to this variable. At the beginning, we assume there is no failure.
         self.original_pod_to_node, self.original_node_to_pod = utils.list_pods_with_node(self.kubecoreapi, phoenix_enabled=True)
+        self.logger.info("Starting Phoenix Controller..")
         
     def obtain_cluster_state(self):
         """
@@ -24,6 +25,8 @@ class PhoenixController:
         """
         self.logger.info("Waiting for additional 30 seconds to let the failure stabilize.")
         time.sleep(30) # Waiting for additional 30 seconds to let the failure stabilize.
+        self.ref_failed_state, _, _ = utils.check_for_failed_nodes(self.kubecoreapi)
+        self.logger.info("Woke up! The new failed nodes are {}".format(self.ref_failed_state))
         curr_pod_to_node, curr_node_to_pod = utils.list_pods_with_node(self.kubecoreapi, phoenix_enabled=True)
         node_status = utils.get_node_status(self.kubecoreapi)
         total_node_resources, pod_resources, ms_to_node = utils.process_cluster_info(self.kubecoreapi, self.nodes_to_monitor, curr_pod_to_node, curr_node_to_pod, self.workloads)
@@ -106,6 +109,7 @@ class PhoenixController:
         self.logger.info("Phoenix generated plan: {}".format(plan["target_state"]))
         ##### sample plan : {'target_state': {'overleaf0--contacts': 'node-18', 'overleaf0--document-updater': 'node-20', 'overleaf0--real-time': 'node-18', 'overleaf0--spelling': 'node-18', 'overleaf0--web': 'node-22', 'overleaf1--clsi': 'node-18', 'overleaf1--document-updater': 'node-24', 'overleaf1--real-time': 'node-18', 'overleaf1--tags': 'node-20', 'overleaf1--web': 'node-24', 'overleaf2--clsi': 'node-23', 'overleaf2--document-updater': 'node-22', 'overleaf2--notifications': 'node-22', 'overleaf2--web': 'node-21', 'hr0--frontend': 'node-20', 'hr0--geo': 'node-19', 'hr0--rate': 'node-21', 'hr0--search': 'node-23', 'hr0--user': 'node-24', 'hr1--frontend': 'node-19', 'hr1--reservation': 'node-23', 'hr1--user': 'node-18'}, 'planner_output': [(0, 'overleaf0--contacts'), (0, 'overleaf0--document-updater'), (0, 'overleaf0--real-time'), (0, 'overleaf0--spelling'), (0, 'overleaf0--web'), (1, 'overleaf1--clsi'), (1, 'overleaf1--document-updater'), (1, 'overleaf1--real-time'), (1, 'overleaf1--tags'), (1, 'overleaf1--web'), (2, 'overleaf2--clsi'), (2, 'overleaf2--document-updater'), (2, 'overleaf2--notifications'), (2, 'overleaf2--web'), (3, 'hr0--frontend'), (3, 'hr0--geo'), (3, 'hr0--rate'), (3, 'hr0--search'), (3, 'hr0--user'), (4, 'hr1--frontend'), (4, 'hr1--reservation'), (4, 'hr1--user')]}
         self.execute(plan['target_state'])
+        self.run() # after execution is done going back to running normally.
         
     
     def check_node_conditions_and_alert(self):

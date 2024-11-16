@@ -50,8 +50,8 @@ def get_actions(cluster_state, target):
             # If the pod exists in both current and target but on different nodes, mark it for migration
             if target[pod] != current[pod]:
                 ns, ms = parse_key(pod)
-                to_delete.append((ns, ms))  # Delete from current node
-                to_spawn.append((ns, ms, target[pod]))  # Spawn on target node
+                # to_delete.append((ns, ms))  # Delete from current node
+                to_spawn.append((ns, ms, target[pod]))  # Spawn on target node # just spawning is sufficient. no need for deletion.
                 to_migrate.append((ns, ms, target[pod]))  # Record migration action
 
     # Check each pod in the target state
@@ -59,7 +59,7 @@ def get_actions(cluster_state, target):
         # If the pod exists in target but not in current, mark it for deleting and then spawning.
         if pod not in current.keys():
             ns, ms = parse_key(pod)
-            to_delete.append((ns, ms))
+            # to_delete.append((ns, ms)) # just spawning is sufficient.
             to_spawn.append((ns, ms, target[pod]))
 
     # Return lists of actions to take
@@ -98,6 +98,7 @@ def delete_microservice(deployment_name, namespace="overleaf"):
         manifests = fetch_all_files_hr(deployment_name, ROOT="overleaf_kubernetes/")[::-1]
     else:
         manifests = fetch_all_files_hr(deployment_name, ROOT="hr_kube_manifests/")[::-1]
+    print(manifests)
     for resource in manifests:
         if "service.yaml" in resource:
             cmd = "kubectl delete svc {} -n {}".format(deployment_name, namespace)
@@ -255,7 +256,9 @@ def check_pods_in_namespace_post_disaster_full(namespace, client, pod_to_node_ap
     pod_list = v1.list_namespaced_pod(namespace)
     nodes = v1.list_node().items
     failed_nodes = set()
-    pods_to_activate_true = set({key.split("--")[-1]: value for key, value in pod_to_node_app.items()})  # No need to convert to list
+    pods_to_activate_true = set([key.split("--")[-1] for key in pod_to_node_app.keys()])
+    pod_to_node_app_new = {key.split("--")[-1]: value for key, value in pod_to_node_app.items()}
+    # pods_to_activate_true = set({key.split("--")[-1]: value for key, value in pod_to_node_app.items()})  # No need to convert to list
     pods_activated = set()
 
     # Identify failed nodes (those with 'Ready' condition as 'Unknown')
@@ -287,7 +290,7 @@ def check_pods_in_namespace_post_disaster_full(namespace, client, pod_to_node_ap
     else:
         # If not all pods are running, return False and list missing pods
         not_in_pods_activated = list(pods_to_activate_true - pods_activated)
-        actions = {pod: pod_to_node_app[pod] for pod in not_in_pods_activated}
+        actions = {pod: pod_to_node_app_new[pod] for pod in not_in_pods_activated}
         return (False, actions)
     
     
