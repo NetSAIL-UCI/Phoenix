@@ -116,8 +116,11 @@ def delete_microservice(deployment_name, namespace="overleaf"):
         #     pv_name = deployment_name+"-pv{}".format(nsid)
         #     cmd = "kubectl delete pv {}".format(pv_name, namespace)
         # print(cmd)
-        output = subprocess.check_output(cmd, shell=True, text=True)
-        print(output)
+        try:
+            output = subprocess.check_output(cmd, shell=True, text=True)
+            print(output)
+        except:
+            print("Skipping delete for the cmd {} because not found that means already deleted.".format(cmd))
 
 def delete_deployment_and_wait(namespace, deployment_name):
     config.load_kube_config()  # Load your Kubernetes config
