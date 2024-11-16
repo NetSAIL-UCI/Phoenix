@@ -386,7 +386,7 @@ After all the microservices are spawned (5 instances on 25 nodes cluster or 2 in
 python3 run_controller.py
 ```
 
-A `controller.log` file starts populating showing Phoenix Controller's logs. For example, the first line should read "No changes detected". This implies that Phoenix is listening for any changes in the node status for the Kubernetes cluster. 
+A `controller.log` file starts populating showing Phoenix Controller's logs.This implies that Phoenix is listening for any changes in the node status for the Kubernetes cluster. 
 
 From the `local` machine (while the run_controller.py script is running), we will execute the following command to generate load and run chaos experiments to see whether Phoenix is able to successfully detect node status changes and take actions to ensure the health of critical services are available. For this, on the `local` machine run the following commands:
 
