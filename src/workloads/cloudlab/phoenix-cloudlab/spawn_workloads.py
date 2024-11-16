@@ -440,7 +440,7 @@ def spawn_hr0():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input parameters.")
-    parser.add_argument("--hostfile", type=str, required=True, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")   
+    # parser.add_argument("--hostfile", type=str, required=True, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")   
     parser.add_argument(
         '--workloads', 
         type=str,  # Allows multiple arguments to be passed
@@ -449,9 +449,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     namespaces = args.workloads.split(',')
-    path_to_host_json = args.hostfile
+    # path_to_host_json = args.hostfile
     
-    node_info_dict = utils.load_obj(path_to_host_json)
+    # node_info_dict = utils.load_obj(path_to_host_json)
     
     logging.basicConfig(filename='spawn.log', filemode='w', level=logging.INFO, format='%(asctime)s - %(levelname)s - {} - %(message)s'.format("[Phoenix]"))
     logger = logging.getLogger()
@@ -477,8 +477,8 @@ if __name__ == "__main__":
     worker_nodes = list(set(nodes) - set(control_plane_nodes))
     logger.info("Worker Nodes: {}".format(worker_nodes))
 
-    if not set(nodes).issubset(set(list(node_info_dict.keys()))):
-        raise ValueError(f"hostfile and k8s nodes do not have the same elements. Please input the correct file.")
+    # if not set(nodes).issubset(set(list(node_info_dict.keys()))):
+    #     raise ValueError(f"hostfile and k8s nodes do not have the same elements. Please input the correct file.")
         
     ### Now check if ssh works by stopping and starting all kubelets in worker nodes. 
     ### This step will also check if we are able to run chaos correctly.
