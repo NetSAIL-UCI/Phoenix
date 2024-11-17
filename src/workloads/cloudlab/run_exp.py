@@ -95,7 +95,7 @@ def generate_load(name, ip_addr, run_time, chaos, t1, t2, num_servers, namespace
     }
     app_to_users_map = {
         "overleaf0": 5,
-        "overleaf1": 50,
+        "overleaf1": 5,
         "overleaf2": 5,
         "hr0": 100,
         "hr1": 50

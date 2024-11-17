@@ -53,11 +53,11 @@ def delete_resources_in_namespaces_with_label(api, label_selector):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input parameters.")
-    parser.add_argument("--hostfile", type=str, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")    
+    # parser.add_argument("--hostfile", type=str, help="Requires the path to a hostfile (in json format). For example, {'node-24': {'host': 'user@pc431.emulab.net'}, 'node-20': {'host': 'user@pc418.emulab.net'}")    
     args = parser.parse_args()
     path_to_host_json = args.hostfile
     
-    node_info_dict = utils.load_obj(path_to_host_json)
+    # node_info_dict = utils.load_obj(path_to_host_json)
     config.load_kube_config()
     # Initialize the Kubernetes API client.
     v1 = client.CoreV1Api()

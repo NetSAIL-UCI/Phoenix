@@ -416,7 +416,13 @@ We first describe the key steps for generating the results of figure 7 and figur
 
 If you're using a 10 node CloudLab cluster running only two workloads, the results might vary however our key take-away should hold primarily that PhoenixCost and PhoenixFair performs close to their respective LP counterparts whereas other algorithms do not perform so well.
 
-Run the script `fig_5.sh` to populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals.
+Run the script `fig5.py` as follows:
+```
+cd Phoenix/
+python3 plotscripts/fig5.py --ip_addr 155.98.38.33 --workloads overleaf0,overleaf1,overleaf2,hr0,hr1
+```
+
+to populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals. Note that this result may vary on each run of `fig5.py` because the cluster is small-scale. 
 
 This concludes the reproducing results section.
 

@@ -666,7 +666,7 @@ class Page(TaskSet):
     # tasks = { move_and_write: 100, spell_check: 90, stop:10}
     # tasks = { move_and_write: 100}
     print("==============IN PAGE===================")
-    tasks = { move_and_write: 400, spell_check: 10, download_project: 1, compile: 30, chat: 0, show_history: 5, get_image: 0,  share_project: 0, tag: 1, stop: 1, file_upload: 5}
+    tasks = { move_and_write: 100, spell_check: 10, download_project: 1, compile: 30, chat: 0, show_history: 50, get_image: 0,  share_project: 0, tag: 1, stop: 1, file_upload: 5}
     if len(PAGE_TASKS):
         t = json.loads(PAGE_TASKS)
         if 'move_and_write' in t: tasks[move_and_write] = t['move_and_write']

@@ -32,3 +32,4 @@ We implemented lines 3 and 4 from the snippet in the Apache Spark script `Saniti
 Next, we perform post-processing to determine which services and traces belong to each application. This is done using the Apache Spark scripts `AppToServiceGraphs.sc` and `AppTracesToUniqueCGs.sc`. The outputs from these scripts are then passed to the Python script `create_app_dags.py`.
 
 The `create_app_dags.py` script generates the necessary folders and files (refer to `datasets/alibaba/AlibabaAppsTest`) that are used to set up the cloud environments and perform all the required downstream tasks.
+

@@ -130,6 +130,46 @@ def plan_and_schedule_adaptlab(app_info, cluster_state, algorithm="phoenixcost")
             "planner_utilized": planner_utilized
         }
     return plan
+
+def plan_and_schedule_cloudlab_benchmark(app_info, cluster_state, idx_to_ns, algorithm="phoenixcost"):
+    """
+    This module takes two inputs: app_info and cluster_state
+    And its output is a dictionary called plan
+    """
+    if algorithm == "lpcost":
+        planner = LPUnified(app_info, cluster_state, fairness=False)
+        target_state = {idx_to_ns[tup[0]]+"--"+str(tup[1]): value for tup, value in planner.proposed_pod_to_node.items()}
+        # target_state = {key[1]: value for key, value in planner.proposed_pod_to_node.items()}
+        plan = {
+            "target_state": target_state,
+            "planner_output": planner.final_pods
+        }
+    elif algorithm == "lpfair":
+        planner = LPUnified(app_info, cluster_state, fairness=True)
+        target_state = {idx_to_ns[tup[0]]+"--"+str(tup[1]): value for tup, value in planner.proposed_pod_to_node.items()}
+        plan = {
+            "target_state": target_state,
+            "planner_output": planner.final_pods
+        }
+    else:
+        pods, _ = run_planner(cluster_state["remaining_capacity"], app_info, algorithm=algorithm)
+        final_pods = []
+        for tup in pods:
+            ns = idx_to_ns[tup[0]]
+            ms = tup[1]
+            final_pods.append(ns+"--"+ms)
+        list_of_pods = [pod for pod in final_pods if cluster_state["workloads"][pod]["stateless"]] # Cloudlab experiment-level detail. Readers should ignore this.
+        cluster_state["list_of_pods"] = list_of_pods
+        cluster_state["num_pods"] = len(list_of_pods)
+        cluster_state["list_of_nodes"] = cluster_state["nodes"]
+        cluster_state["container_resources"] = copy.deepcopy(cluster_state["pod_resources"])
+        proposed_pod_to_node, _, _ = run_scheduler(cluster_state, algorithm=algorithm)
+        plan = {
+            "target_state": proposed_pod_to_node,
+            "planner_output": pods
+        }
+    return plan
+
     
 def plan_and_schedule_cloudlab(app_info, cluster_state, algorithm="phoenixcost"):
     """

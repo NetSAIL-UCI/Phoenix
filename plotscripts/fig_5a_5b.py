@@ -49,24 +49,24 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
     for index, row in res.iterrows():            
         data[row["failure_level"]][sys] = (row[1], row[2]) 
     markers = {
-        "lpunifiedfair": "s",
-        "lpunified": "s",
+        "lpfair": "s",
+        "lpcost": "s",
         "phoenixcost": "*",
         "phoenixfair": "*",
         "priority": "o",
-        "fairDG": "v",
+        "fair": "v",
         "default": "^",
         "priorityminus": "X",
         # "fairDGminus": "4",
         # "defaultminus": "3"
     }
     system_to_color = {
-        "lpunifiedfair": "#00FFFF",
-        "lpunified": "#8FED8F",
+        "lpfair": "#00FFFF",
+        "lpcost": "#8FED8F",
         "phoenixcost": "purple",
         "phoenixfair": "red",
         "priority": "#f39c12",
-        "fairDG": "#3498db",
+        "fair": "#3498db",
         "default": "#964B00",
         "priorityminus": "#9b59b6",
         # "fairDGminus": "4",
@@ -74,12 +74,12 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
     }
     
     system_to_name = {
-        "lpunifiedfair": "LPFair",
-        "lpunified": "LPCost",
+        "lpfair": "LPFair",
+        "lpcost": "LPCost",
         "phoenixcost": "PhoenixCost",
         "phoenixfair": "PhoenixFair",
         "priority": "Priority",
-        "fairDG": "Fair",
+        "fair": "Fair",
         "default": "Default",
         "priorityminus": "No Diagonal Scaling",
     }
@@ -96,7 +96,11 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
             # y.append(data[key][alg][1])
             # legends.append(alg)
             plt.scatter(float(data[key][alg][1] / max_deviation), data[key][alg][0], label=system_to_name[alg], color = system_to_color[alg], marker=markers[alg], s=250)
-        filename = save_dir+"failure_level={}_fairness.png".format(key)
+        new_x = 1
+        new_y = 0
+
+        plt.scatter(new_x, new_y, color="#9b59b6", label='No Diagonal Scaling', marker="X", s=250)
+        filename = save_dir+"fig5b.png"
         # ax.set(yticks=ind + width, yticklabels=df.index, ylim=[2*width-0.5, len(df)])
         # ax.legend(loc="lower left", fontsize='large')
         # plt.spines['top'].set_visible(False)
@@ -105,11 +109,11 @@ def do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys
         plt.yticks(fontsize=18, color='gray')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.annotate('Better', xy=(0.3, 0.7), xycoords='data',
-            xytext=(0.4, 0.5), textcoords='axes fraction',
-            va='bottom', ha='left', size=14,
-            color='gray',
-            arrowprops=dict(facecolor='gray', edgecolor="gray", shrink=0.05))
+        # ax.annotate('Better', xy=(0.3, 0.7), xycoords='data',
+        #     xytext=(0.4, 0.5), textcoords='axes fraction',
+        #     va='bottom', ha='left', size=14,
+        #     color='gray',
+        #     arrowprops=dict(facecolor='gray', edgecolor="gray", shrink=0.05))
         # ax.add_patch(arrow)
         plt.xlabel("Deviation from Max-Min Fairness", fontsize=18)
         plt.ylabel("Critical Service Availability", fontsize=18)
@@ -143,24 +147,24 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_d
             data[row["failure_level"]][sys] = (row[1], row[2]) 
     # print(max_revenue)
     markers = {
-        "lpunifiedfair": "s",
-        "lpunified": "s",
+        "lpfair": "s",
+        "lpcost": "s",
         "phoenixcost": "*",
         "phoenixfair": "*",
         "priority": "o",
-        "fairDG": "v",
+        "fair": "v",
         "default": "^",
         "priorityminus": "X",
         # "fairDGminus": "4",
         # "defaultminus": "3"
     }
     system_to_color = {
-        "lpunifiedfair": "#00FFFF",
-        "lpunified": "#8FED8F",
+        "lpfair": "#00FFFF",
+        "lpcost": "#8FED8F",
         "phoenixcost": "purple",
         "phoenixfair": "red",
         "priority": "#f39c12",
-        "fairDG": "#3498db",
+        "fair": "#3498db",
         "default": "#964B00",
         "priorityminus": "#9b59b6",
         # "fairDGminus": "4",
@@ -168,12 +172,12 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_d
     }
     
     system_to_name = {
-        "lpunifiedfair": "LPFair",
-        "lpunified": "LPCost",
+        "lpfair": "LPFair",
+        "lpcost": "LPCost",
         "phoenixcost": "PhoenixCost",
         "phoenixfair": "PhoenixFair",
         "priority": "Priority",
-        "fairDG": "Fair",
+        "fair": "Fair",
         "default": "Default",
         "priorityminus": "No Diagonal Scaling",
     }
@@ -189,16 +193,22 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_d
             # y.append(data[key][alg][1])
             # legends.append(alg)
             plt.scatter(float(data[key][alg][1] / max_revenue), data[key][alg][0], label=system_to_name[alg], color=system_to_color[alg], marker=markers[alg], s=250)
-        filename = save_dir+"failure_level={}_revenue.png".format(key)
+            
+        new_x = 0
+        new_y = 0
+
+        plt.scatter(new_x, new_y, color="#9b59b6", label='No Diagonal Scaling', marker="X", s=250)
+
+        filename = save_dir+"fig5a.png"
         plt.xticks(fontsize=18, color='gray')
         plt.yticks(fontsize=18, color='gray')
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.annotate('Better', xy=(0.75, 0.7), xycoords='data',
-            xytext=(0.5, 0.5), textcoords='axes fraction',
-            va='bottom', ha='left', size=14,
-            color='gray',
-            arrowprops=dict(facecolor='gray',  edgecolor="gray", shrink=0.05))
+        # ax.annotate('Better', xy=(0.75, 0.7), xycoords='data',
+        #     xytext=(0.5, 0.5), textcoords='axes fraction',
+        #     va='bottom', ha='left', size=14,
+        #     color='gray',
+        #     arrowprops=dict(facecolor='gray',  edgecolor="gray", shrink=0.05))
         # ax.annotate("", xy=(0.7, 0.7), xytext=(0.5, 0.5),arrowprops=dict(arrowstyle="->"))
         plt.xlabel("Revenue", fontsize=18)
         plt.ylabel("Critical Service Availability", fontsize=18)
@@ -215,8 +225,19 @@ def do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_d
         
 def plot_figures_5a_5b():
     work_dir = "asplos_25/"
-    df = pd.read_csv(work_dir+"cloudlab_results_ae.csv")
+    df = pd.read_csv(work_dir+"eval_results_cloudlab.csv")
     failure_levels = [7]
-    sys_names = ["lpunifiedfair", "lpunified", "phoenixfair","phoenixcost","priority","fairDG", "default","priorityminus"]
+    sys_names = ["lpcost", "lpfair", "phoenixfair","phoenixcost","priority","fair", "default","priorityminus"]
     do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_dir=work_dir)
     do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names, save_dir=work_dir)
+    print("Saved plots in asplos_25/")
+    
+if __name__ == "__main__":
+    work_dir = "asplos_25/"
+    df = pd.read_csv(work_dir+"eval_results_cloudlab.csv")
+    print(df.head())
+    failure_levels = [7]
+    sys_names = ["lpcost", "lpfair", "phoenixfair","phoenixcost","priority","fair", "default"]
+    do_scatter_plot_for_each_failure_level(df, failure_levels, sys_names, save_dir=work_dir)
+    do_scatter_plot_for_each_failure_level_with_fairness(df, failure_levels, sys_names, save_dir=work_dir)
+    print("Saved plots in asplos_25/")

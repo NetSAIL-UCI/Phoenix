@@ -234,7 +234,7 @@ def get_success_rate_from_traces_overleaf0(filename, g, active_nodes):
         for line in logs:
             if "[Phoenix]" not in line:
                 continue
-            if "Websocket" not in line:
+            if "Websocket" not in line and "update_text" not in line and "update_cursor" not in line:
                 continue
             entry = line.replace("\n", "")
             parts = entry.split(" ")
@@ -255,7 +255,7 @@ def get_success_rate_from_traces_overleaf1(filename, g, active_nodes):
             entry = line.replace("\n", "")
             parts = entry.split(" ")
             workload = parts[-3]
-            if workload == "compile":
+            if workload == "history" or workload == "document_diff" or workload == "get_project_list":
                 services_required = essential_microservices_overleaf(workload)
                 if set(services_required).issubset(active_nodes):
                     successes += 1
