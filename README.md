@@ -422,9 +422,13 @@ cd Phoenix/
 python3 plotscripts/fig5.py --ip_addr 155.98.38.33 --workloads overleaf0,overleaf1,overleaf2,hr0,hr1
 ```
 
-to populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals. Note that this result may vary on each run of `fig5.py` because the cluster is small-scale. For a 10-node cluster, please pass the workloads as the namespaces that have been spawned in the cloud. We recommend going over the script of `fig5.py` to get an understanding of how we run the experiments.
+We recommend going over the script of `fig5.py` to get an understanding of how we run the experiments. Please note that this script assumes that you completed the steps for [real-world](#6-real-world-experiment).This script will populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals. Similarly, for a 10-node cluster, ensure you pass workloads as namespaces that have been deployed within the CloudLab environment.
 
-This concludes the reproducing results section.
+
+Keep in mind that the results may vary with each execution of fig5.py due to the small-scale nature of the cluster.
+
+It's important to note that baselines like Priority might still perform better under this controlled CloudLab setting. This is because the environment lacks sufficient diversity --- there's less skew, and all applications exhibit a nearly equal spread of criticalities, which doesn't fully represent a large-scale cloud environment. However, if you run these baselines enough times, you'll notice their worst-case performance can be significantly poor. For example, with the Priority baseline, the planner might create a configuration where critical services (e.g., web, frontend) are deprioritized (appear at the end of the list because there is no cooperation between datacenter operators and applications), potentially leading to poor performances.
+
 
 <!-- 
 ### Cloudlab

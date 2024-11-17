@@ -5,6 +5,13 @@ import subprocess
 import ast
 import copy
 
+def create_folder_if_not_exists(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+        print(f"Folder created: {path}")
+    else:
+        print(f"Folder already exists: {path}")
+
 def run_cmd_output(cmd):
     output = subprocess.check_output(cmd, shell=True, text=True)
     return output
@@ -54,6 +61,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     namespaces = args.workloads.split(',')
     ip_addr = args.ip_addr
+    
+    ## First create asplos_25/ folder if it does not exist
+    create_folder_if_not_exists("asplos_25/")
     
     ## first load the cluster environment
     node_info_dict = load_obj("src/workloads/cloudlab/phoenix-cloudlab/node_info_dict.json")
