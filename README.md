@@ -410,7 +410,7 @@ We first describe the key steps for generating the results of figure 7 and figur
 1. Next, open terminal and run `cd plotscripts/`
 2. Run `bash fig7.sh`. Please read the comments in `fig7.sh` script to get an overview of how evaluation is performed. This script roughly takes 30 minutes ours to execute fully because it first creates the cloud environment of 100,000 nodes using the derived application DGs available in `./datasets`.
 3. Once `fig7.sh` is executed, a new folder of the name `./asplos_25` will be created which will have the experiment results logged into `.csv` files and figures `fig7a.pdf`, `fig7b.pdf`, and `fig7c.png`. 
-4. Similarly, run `bash fig8a.sh`, `bash fig8b.sh`, `bash fig8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine.
+4. Similarly, run `bash fig8a.sh`, `bash fig8b.sh`, `bash fig8c.sh` to populate the `./asplos_25` folder with plots and experiment logs. The duration for each script has been provided. Although it may vary depending on machine. Note that for fig8b.sh we haven't yet automated the process of baselining LP because we manually cut it off at 3600 seconds (1 hour). However, readers can still see that Phoenix is at par with other baselines such as default and has a runtime overhead of under 10 seconds for 100,000 node cluster sizes.
 
 ### 8.2 Reproducing Real-World Results
 
