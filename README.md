@@ -422,10 +422,9 @@ cd Phoenix/
 python3 plotscripts/fig5.py --ip_addr 155.98.38.33 --workloads overleaf0,overleaf1,overleaf2,hr0,hr1
 ```
 
-to populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals. Note that this result may vary on each run of `fig5.py` because the cluster is small-scale. 
+to populate `asplos_25/` folder with a fig5 plot where we expect to see PhoenixCost and PhoenixFair closely meeting their operator and application-level goals. Note that this result may vary on each run of `fig5.py` because the cluster is small-scale. This result assumes that a 25-node cluster has been setup with all five workloads. We recommend going over the script of `fig5.py` to get an understanding of how we run the experiments.
 
 This concludes the reproducing results section.
-
 
 <!-- 
 ### Cloudlab

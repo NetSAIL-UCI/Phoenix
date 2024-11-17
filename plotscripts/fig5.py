@@ -68,7 +68,7 @@ if __name__ == "__main__":
     output = run_cmd_output(cmd)
     
     ## Now run cloudlab eval
-    cmd = "source .venv/bin/activate; python3 -m src.simulator.cloudlab_benchmark --name cloudlab --algs phoenixcost,phoenixfair,lpcost,lpfair,fair,priority,default --n 7"
+    cmd = "source .venv/bin/activate; python3 -m src.simulator.cloudlab_benchmark --name cloudlab --n 7".format(args.workloads)
     output = run_cmd_output(cmd)
     
     ## Now plot the results

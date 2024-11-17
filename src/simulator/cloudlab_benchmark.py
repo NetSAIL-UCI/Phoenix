@@ -355,18 +355,10 @@ def run_cloudlab(cloud_name, sys_names, nodes_to_del):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input parameters.")
     parser.add_argument("--name", type=str, help="provide the cloud environment, you'd like to benchmark.")
-    parser.add_argument(
-        '--algs', 
-        type=str,  # Allows multiple arguments to be passed
-        required=False, 
-        help="List of algorithms to benchmark (optional). If not specified will run on all algs."
-    )
     parser.add_argument("--n", type=int, help="provide the cloud environment, you'd like to benchmark.")
     
-    args = parser.parse_args()
-    if args.algs is None:
-        sys_names = ["phoenixcost", "phoenixfair", "priority","fair","default"]
-    else:
-        sys_names = args.algs.split(',')
     
+    ### No need to give namespaces because the cluster_env.json already has this information.
+    args = parser.parse_args()
+    sys_names = ["phoenixcost", "phoenixfair", "priority","fair","default", "lpcost", "lpfair"]
     run_cloudlab(args.name, sys_names, args.n)
