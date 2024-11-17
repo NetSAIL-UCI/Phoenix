@@ -426,9 +426,9 @@ if __name__ == "__main__":
         dump_cluster_state_alibaba(
             server_capacity_dist, pods, pods_deployed, assignment, deployment["dag_to_id"], dest_folder.replace("/apps", "")
         )
-        print("Deleting the DAGRepo folder now.")
-        try:
-            shutil.rmtree(dagrepo)
-            print(f"Directory '{dagrepo}' has been deleted.")
-        except OSError as e:
-            print(f"Error in deleting the DAGRepo folder: {e}")
+    print("Deleting the DAGRepo folder now.")
+    try:
+        shutil.rmtree(dagrepo)
+        print(f"Directory '{dagrepo}' has been deleted.")
+    except OSError as e:
+        print(f"Error in deleting the DAGRepo folder: {e}")
