@@ -299,7 +299,7 @@ def check_pods_in_namespace_post_disaster_full(namespace, client, pod_to_node_ap
     
 def load_graph(ns):
     work_dir = ""
-    dir = work_dir + "dags/dags/"
+    dir = work_dir + "dags/dags/dags/"
     if "overleaf" in ns:
         f = dir+"overleaf_graph.pickle"
     else:

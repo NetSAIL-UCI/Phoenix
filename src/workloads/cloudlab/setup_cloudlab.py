@@ -33,7 +33,7 @@ def label_nodes(node_info_dict):
     s = """
 sudo add-apt-repository ppa:deadsnakes/ppa; sudo apt update; sudo apt -y install python3.9; sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2; sudo apt-get -y install python3-pip
 # install kubernetes package
-sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes; python3 -m pip install networkx; python3 -m pip install numpy; python3 -m pip install requests; python3 -m pip install sortedcontainers; python3 -m pip install matplotlib
+sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes; python3 -m pip install networkx; python3 -m pip install numpy; python3 -m pip install requests; python3 -m pip install sortedcontainers; python3 -m pip install matplotlib; python3 -m pip install gurobipy
 """
     for node in node_info_dict.keys():
         node_id = node.split("-")[-1].strip()
@@ -53,9 +53,9 @@ istioctl install
 wget https://packages.gurobi.com/10.0/gurobi10.0.3_linux64.tar.gz
 tar -xvf gurobi10.0.3_linux64.tar.gz
 
-setenv GUROBI_HOME gurobi1003/linux64
-setenv PATH ${PATH}:${GUROBI_HOME}/bin
-setenv LD_LIBRARY_PATH ${GUROBI_HOME}/lib
+export GUROBI_HOME gurobi1003/linux64
+export PATH ${PATH}:${GUROBI_HOME}/bin
+export LD_LIBRARY_PATH ${GUROBI_HOME}/lib
 
 echo "Done! Press Enter twice"
 
@@ -96,36 +96,36 @@ if __name__ == "__main__":
     
     This script uploads all the necessary source code required to run the experiment.
     """
-    
-    list_view_str = """node-24	pc431	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc431.emulab.net 		
-node-20	pc418	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc418.emulab.net 		
-node-21	pc427	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc427.emulab.net 		
-node-22	pc543	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc543.emulab.net 		
-node-23	pc448	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc448.emulab.net 		
-node-11	pc436	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc436.emulab.net 		
-node-10	pc524	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc524.emulab.net 		
-node-13	pc513	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc513.emulab.net 		
-node-12	pc435	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc435.emulab.net 		
-node-15	pc426	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc426.emulab.net 		
-node-14	pc530	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc530.emulab.net 		
-node-17	pc534	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc534.emulab.net 		
-node-16	pc494	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc494.emulab.net 		
-node-19	pc440	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc440.emulab.net 		
-node-18	pc553	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc553.emulab.net 		
-node-5	pc556	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc556.emulab.net 		
-node-4	pc502	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc502.emulab.net 		
-node-7	pc478	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc478.emulab.net 		
-node-6	pc545	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc545.emulab.net 		
-node-1	pc544	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc544.emulab.net 		
-node-0	pc433	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc433.emulab.net 		
-node-3	pc441	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc441.emulab.net 		
-node-2	pc551	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc551.emulab.net 		
-node-9	pc417	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc417.emulab.net 		
-node-8	pc479	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh kapila1@pc479.emulab.net 		
+
+
+    list_view_str = """node-24	pc436	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc436.emulab.net 		
+node-20	pc546	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc546.emulab.net 		
+node-21	pc474	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc474.emulab.net 		
+node-22	pc437	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc437.emulab.net 		
+node-23	pc451	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc451.emulab.net 		
+node-11	pc489	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc489.emulab.net 		
+node-10	pc480	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc480.emulab.net 		
+node-13	pc559	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc559.emulab.net 		
+node-12	pc419	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc419.emulab.net 		
+node-15	pc439	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc439.emulab.net 		
+node-14	pc493	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc493.emulab.net 		
+node-17	pc508	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc508.emulab.net 		
+node-16	pc522	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc522.emulab.net 		
+node-19	pc545	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc545.emulab.net 		
+node-18	pc426	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc426.emulab.net 		
+node-5	pc542	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc542.emulab.net 		
+node-4	pc557	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc557.emulab.net 		
+node-7	pc440	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc440.emulab.net 		
+node-6	pc533	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc533.emulab.net 		
+node-1	pc433	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc433.emulab.net 		
+node-0	pc537	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc537.emulab.net 		
+node-3	pc553	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc553.emulab.net 		
+node-2	pc484	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc484.emulab.net 		
+node-9	pc502	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc502.emulab.net 		
+node-8	pc538	d710	Emulab	ready	Finished	emulab-ops/UBUNTU22-64-STD	ssh redacted@pc538.emulab.net 		
 
 """
     node_info_dict = setup_utils.get_node_info_dict(list_view_str)
-    # print(node_info_dict)
     setup_utils.dump_object_as_json(node_info_dict, NODE_INFO_DICT)
     s = label_nodes(node_info_dict)
     

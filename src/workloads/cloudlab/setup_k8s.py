@@ -17,7 +17,7 @@ def label_nodes(node_info_dict):
 # install python 3.9
 sudo add-apt-repository ppa:deadsnakes/ppa; sudo apt update; sudo apt -y install python3.9; sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2; sudo apt-get -y install python3-pip
 # install kubernetes package
-sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes; python3 -m pip install networkx; python3 -m pip install numpy; python3 -m pip install requests; python3 -m pip install sortedcontainers; python3 -m pip install matplotlib
+sudo apt-get -y install python3.9-distutils; python3 -m pip install kubernetes; python3 -m pip install networkx; python3 -m pip install numpy; python3 -m pip install requests; python3 -m pip install sortedcontainers; python3 -m pip install matplotlib; python3 -m pip install gurobipy
 """
     for node in node_info_dict.keys():
         node_id = node.split("-")[-1].strip()
@@ -33,13 +33,6 @@ cd istio-1.19.3/
 # setenv PATH $PWD/bin:$PATH
 export PATH = $PWD/bin:$PATH
 istioctl install
-
-wget https://packages.gurobi.com/10.0/gurobi10.0.3_linux64.tar.gz
-tar -xvf gurobi10.0.3_linux64.tar.gz
-
-setenv GUROBI_HOME gurobi1003/linux64
-setenv PATH ${PATH}:${GUROBI_HOME}/bin
-setenv LD_LIBRARY_PATH ${GUROBI_HOME}/lib
 
 """
     return s
